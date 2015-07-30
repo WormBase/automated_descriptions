@@ -296,10 +296,13 @@ if (-e $file){
   my @lines = read_file($file); 
   foreach my $line (@lines){
   chomp($line);
+  next if (lc($line)=~/obsolete/);
   my $key   = $line;
   my $value = $line;
   $key  =~ /\(($ontology_code.+?)\)/;
   $key = $1; 
+  $key =~ s/^\s+//;
+  $key =~ s/\s+$//;
   $value =~ s/\($ontology_code.*//g;
   chomp($value);
   $value =~ s/^\s+//;
@@ -317,6 +320,7 @@ if (-e $altid_file){
        foreach my $alt_id (@alts){
         chomp($name);
         chomp($alt_id);
+        next if (lc($name) =~/obsolete/);
         $alt_id =~ s/^\s+//;
         $alt_id =~ s/\s+$//;
         $name =~ s/^\s+//;
