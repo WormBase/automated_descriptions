@@ -34,42 +34,58 @@ my @alts = ();
 my $id = 0;
 my $old_id=0; 
 my $name="";
+my %obsolete = ();
+my $alt_string;
  my @lines = split(/\n/,$text);
    foreach (@lines){
      my $line = $_;
      chomp($line);
-       if ($line =~/^name\:/){
-           $name = $line;
-           $name =~ s/name\://g;
-           $name =~ s/^\s+//;
-           $name =~ s/\s+$//;
-       }
-       if (($line =~/^id\:/)or ($line =~/^alt\_id\:/)){
-           if ($line=~/^id\:/){
+         if ($line=~/^id\:/){
                    $id = $line;
                    $id =~s/id\://g;
                    $id =~ s/^\s+//;
                    $id =~ s/\s+$//;
-               if ($old_id ne $id){
-                   my $alt_string = join("\-", @alts); 
-                   if ($alt_string ne "" ) {
+                 }
+         if ($line =~/^alt\_id\:/){
+              my $alt = $line;
+              $alt =~s/alt\_id\://g;
+              $alt=~ s/^\s+//;
+              $alt =~ s/\s+$//;
+              print "alt of $id is $alt\n";
+              push(@alts, $alt);
+              }
+        if ($line =~/^name\:/){
+           $name = $line;
+           $name =~ s/name\://g;
+           $name =~ s/^\s+//;
+           $name =~ s/\s+$//;
+           if ($name =~/obsolete/){
+               $name = "";
+           }
+        }
+              $obsolete{$id}=0;
+          if ($line =~/"is\_obsolete\: true"/){
+              $obsolete{$id}=1;  
+          }
+             if ($obsolete{$id} ne ""){
+               if (($old_id ne $id) and ($obsolete{$id} eq 0)) {
+                   $alt_string = join("\-", @alts); 
+                   if (($alt_string ne "" ) and ($name ne "") ) {
                          my $output_string = "$old_id\t$alt_string\t$name\n";
+                         print $output_string;
                          write_file($output, {append => 1 }, $output_string); 
                     }
                    $name ="";
                    $old_id = $id;
                    @alts=();
                    $alt_string="";
+                  } elsif (($old_id ne $id) and ($obsolete{$id} eq 1)){
+                   $name ="";
+                   $old_id = $id;
+                   @alts=();
+                   $alt_string="";
                   }
                }
-          if ($line =~/^alt\_id\:/){
-              my $alt = $line;
-              $alt =~s/alt\_id\://g;
-              $alt=~ s/^\s+//;
-              $alt =~ s/\s+$//;
-              push(@alts, $alt);
               }
-     }
- }
 
 exit 0;
