@@ -5,18 +5,18 @@ use List::MoreUtils qw(uniq);
 use List::Util qw/first/;
 use File::Slurp;
 use Text::CSV;
-use Switch;
 use warnings;
 use strict;
 
-my $species = $ARGV[0];
-my $project = $ARGV[1];
-my $species_name = $ARGV[2];
-my $species_prefix = $ARGV[3];
+my $AND = "AND";
+my $species_term = $ARGV[0];
+my ($species, $project, $species_name, $species_prefix) = split(/$AND/, $species_term);
 
 chomp($species);
 chomp($project);
 chomp($species_name);
+chomp($species_prefix);
+ $species_name =~s/\_/ /g;
 
 if ($species_prefix){
  chomp($species_prefix);
@@ -31,16 +31,19 @@ $species =~ s/\s+$//;
 $species_name =~ s/^\s+//;
 $species_name =~ s/\s+$//;
 
-if ($species =~/elegans/){
-#
 my $PRODUCTION_RELEASE = ConciseDescriptions::get_production_release();
 my $RELEASE = ConciseDescriptions::get_release();
 my $html = ConciseDescriptions::get_html_dir();
-my $home = $html . "concise_descriptions/release/$PRODUCTION_RELEASE/c_elegans/";
-my $gene_list_dir = $home . "gene_lists/";
+my $home = $html . "concise_descriptions/";
+my $gene_list_dir = $home . "release/$PRODUCTION_RELEASE/c_elegans/gene_lists/";
+my $db_gene_list  = $gene_list_dir . "wb_gene_list.txt";
+#
+# Define component adjectives
+my @component_adjectives = ("GO\:0005622");
+#
 # Define GO term file
 my $ontology = "GO";
-my $go_file = $gene_list_dir . "newterms.txt";
+my $go_file = $gene_list_dir . "go_terms.txt";
 my $go_altid =  $gene_list_dir . "goid_altid.txt";
 my $input_ace_file = $gene_list_dir . "go_terms.ace";
 #
@@ -52,23 +55,32 @@ my %children = %$children_ref;
 # Create GO hash so that terms can be referenced by GO ID.
 my $gene_ontology_ref = ConciseDescriptions::get_ontology_hash($ontology, $go_file, $go_altid);
 my %gene_ontology = %$gene_ontology_ref;
-my $go_elegans_dir = $home . "gene_ontology/input_files/";
-my $gene_association_elegans_file = $go_elegans_dir . "gene_association.$RELEASE.wb.c_elegans";
-my $elegans_orthology = $home . "orthology/";
-my $go_path = $home . "gene_ontology/output_files/";
+my $go_dir = $home . "release/$PRODUCTION_RELEASE/$species/gene_ontology/input_files/";
+my $go_elegans_dir = $home . "release/$PRODUCTION_RELEASE/c_elegans/gene_ontology/input_files/";
+my $gene_association_species_file = $go_dir . "gene_association.$RELEASE.wb.$species";
+my $gene_association_elegans_file = $go_elegans_dir . "gene_association.wb";
+my $orthology = $home . "release/$PRODUCTION_RELEASE/$species/orthology/";
+my $elegans_orthology = $home . "release/$PRODUCTION_RELEASE/c_elegans/orthology/";
+
+my $go_path = $home . "release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/";
 my $output_file = $go_path . "sentences_for_GO.txt";
-#
-my $wbgene_elegans_name_hash_ref = get_wbgene_name_elegans_hash($gene_association_elegans_file);
-my %wbgene_elegans_name_hash = %$wbgene_elegans_name_hash_ref;
 #
 my $doublecomma = "\,\,";
 my $the_the = "the the";
 my $the = "the";
+my $is_is = "is is";
+my $is = "is";
+my $is_a_is_a = "is a is a";
+my $is_a = "is a";
 my $blank_comma = "\, \,";
 my $comma = "\, ";
 my $nadp =" NAD or NADP as acceptor\,";
 my $component_watch_string = "integral component of";
 my $component_watch_string_the = "integral component of the";
+#my $is_localized_cellular="is localized to the intracellular";
+#my $is_cellular="is intracellular";
+my $structural="structural constituent";
+my $is_structural="is a structural constituent";
 #
 my $synaptic_1_0 = "synaptic transmission\, GABAergic";
 my $synaptic_1_1 = "GABAergic synaptic transmission";
@@ -93,17 +105,24 @@ my $molting_0 = "molting cycle";
 
 my $embryo   = "embryo development";
 my $embryo_1 = "embryo development ending in birth or egg hatching";
+
+my $the_cell_0 = "localized to the cell";
+my $the_cell_1 = "expressed widely";
+
+my $growth_0 = "multicellular organism growth";
+my $growth_1 = "growth";
+#
+my $helper_string_after_iea = "\, based on protein domain information";
+my $helper_string_before_iea = "based on protein domain information\, ";
 #
 if (-e $go_path){
-   my $go_path_flag = 1;
-#   print "$go_path exists\n"; 
+   print "$go_path exists\n"; 
 } else {
    mkdir $go_path or die "could not create $go_path";
 }
 my $individual_path = $go_path . "individual_gene_sentences/";
 if (-e $individual_path){
-   my $individual_path_flag = 1;
-#   print "$individual_path exists\n"; 
+   print "$individual_path exists\n"; 
 } else {
    mkdir $individual_path or die "could not create $individual_path";
 }
@@ -119,27 +138,59 @@ if (-e $output_file){
       system(@args) == 0 or die("could not delete $individual\n");
    }
 
-#my $infile = $gene_list_dir . "sort.wbgene_list.no_concise_descriptions.txt";
-my $infile = $gene_list_dir . "sort.uncurated_genes.txt";
-
-my @gene_array = read_file($infile);
-my $gene_name_hash_ref = get_gene_name_hash($gene_association_elegans_file);
+my $gene_array_ref = get_gene_array($gene_association_species_file);
+my @gene_array = @$gene_array_ref;
+my $gene_name_hash_ref = get_gene_name_hash($gene_association_species_file, $db_gene_list);
 my %gene_name_hash = %$gene_name_hash_ref;
 my $go = "P";
+my $gene_process_hash_ref = get_gene_go_hash($gene_association_species_file, $go);
+my %gene_process_hash = %$gene_process_hash_ref;
 my $elegans_process_hash_ref = get_gene_go_hash($gene_association_elegans_file, $go, 1);
 my %elegans_process_hash = %$elegans_process_hash_ref;
    $go = "C";
+my $gene_component_hash_ref = get_gene_go_hash($gene_association_species_file, $go);
+my %gene_component_hash = %$gene_component_hash_ref;
 my $elegans_component_hash_ref = get_gene_go_hash($gene_association_elegans_file, $go, 1);
 my %elegans_component_hash = %$elegans_component_hash_ref;
    $go = "F";
+my $gene_function_hash_ref = get_gene_go_hash($gene_association_species_file, $go);
+my %gene_function_hash = %$gene_function_hash_ref;
 my $elegans_function_hash_ref = get_gene_go_hash($gene_association_elegans_file, $go, 1);
 my %elegans_function_hash = %$elegans_function_hash_ref;
+my $dead_gene_list = $gene_list_dir . "sort.dead_genes.txt";
+my @dead_genes = read_file($dead_gene_list);
 
-foreach my $gene_id (@gene_array){
- chomp($gene_id);
-       $gene_id =~ s/^\s+//;
-       $gene_id =~ s/\s+$//;
+my @live_gene_array = ();
+foreach my $test (@gene_array){
+ my $keep =0;
+ foreach my $dead (@dead_genes){
+   if ($dead =~/$test/){
+    $keep = 1;
+   }
+ }
+ if ($keep ==0){
+   push(@live_gene_array, $test);
+ }
+}
+my @sorted_live_gene_array = sort(@live_gene_array);
+my $curated_gene_list = $gene_list_dir . "sort.curated_genes.txt";
+my @curated_genes = read_file($curated_gene_list);
+my @uncurated_genes_array = ();
+foreach my $test (@live_gene_array){
+ my $keep =0;
+# foreach my $curated (@curated_genes){
+#   if ($curated =~/$test/){
+#    $keep = 1;
+#   }
+# }
+ if ($keep ==0){
+   push(@uncurated_genes_array, $test);
+ }
+}
+my @sorted_uncurated_genes_array = sort(@uncurated_genes_array); 
 
+foreach my $gene_id (@sorted_uncurated_genes_array){
+ print "$gene_id\n";
  my @gene_processes = ();
  my @gene_functions = ();
  my @gene_components = ();
@@ -153,59 +204,46 @@ foreach my $gene_id (@gene_array){
  my $process_string = "";
 
  my $gene_name = $gene_name_hash{$gene_id};
- my $gene_process = $elegans_process_hash{$gene_id};
+ my $gene_process = $gene_process_hash{$gene_id};
  if ($gene_process){
  my $gene_row = $gene_id . "\," . $gene_name . "\," . $gene_process;
 # print "gene row is $gene_row\n";
 # check for granularity
- my $processes_ref = ConciseDescriptions::get_granular_array($ontology, $gene_row, "IEA", "ISS", \%parents);
+ my $processes_ref = ConciseDescriptions::get_granular_array($ontology, $gene_row, "", "", \%parents);
  my @processes = @{$processes_ref};
  if (@processes){
 # convert the ids into terms and put them in the array
     my $process_count = 0;
     foreach my $process (@processes){
-     next if ($process =~/\[IEA\]/);
-     next if ($process =~/\[ISS\]/);
      $process_count++;
-     if ($process_count gt 2){
+     next if ($process=~/$gene_id/);
+     next if ($process=~/$gene_name/);
+
+     if ($process_count > 0){
         $process =~ s/^\s+//;
         $process =~ s/\s+$//;
-     my $go_term = "";
-             my ($evidence) = $process =~ /\[(.*)\]/;
-             if ($evidence) {
-                 $process =~ s/\[$evidence\]//g;
-             }
-             $process =~ s/^\s+//;
-             $process =~ s/\s+$//;
-           
-     $go_term = ConciseDescriptions::get_ontology_term($process, \%gene_ontology);
+     my $go_term = ConciseDescriptions::get_ontology_term($process, \%gene_ontology); 
      if ($go_term){
-         $go_term .= "[$evidence]";
-         push(@GO_processes, $go_term);
+      if (lc($go_term) !~/obsolete/){   
+        push(@GO_processes, $go_term);
+       }
       }
+#     print "process go_term $process\t$go_term\n";
      }
     }
-# 
-#     my $process_goterm = join(', ', @GO_processes)
 #
      if (@GO_processes){
-#
-# yet untested, $imp="IMP" would identify processes with evidence code separately; else it includes them without 
-# adding information that it was "based on mutant phenotype"
-#
-     my $imp = "";
-     my $process_goterm = get_verb_process_goterm(\@GO_processes, $imp);
+     @GO_processes=uniq(sort(@GO_processes));
+     my $process_goterm = get_verb_process_goterm(\@GO_processes);
      if ($process_goterm) {   
         $process_string = $process_goterm;
-#        print "process string = $process_string\n";
+        print "process $process_string\n";
 #        $process_string .= "\;\n";
         $process_string =~ s/^\s+//;
         $process_string =~ s/\s+$//;
         $process_string =~ s/ \,/\,/g;
         $process_string =~ s/ +/ /g;
-#
 # Remove evidence codes
-#
         my ($evidence_to_remove) = $process_string =~ /\[(.*)\]/;
         if ($evidence_to_remove) {
              $process_string =~ s/\[[^\]]*\]//g;
@@ -230,69 +268,42 @@ foreach my $gene_id (@gene_array){
     }
  } # gene_process
 }
- my $gene_function = $elegans_function_hash{$gene_id};
+ my $gene_function = $gene_function_hash{$gene_id};
  if ($gene_function){
  my $gene_row = $gene_id . "\," . $gene_name . "\," . $gene_function;
+ print "function\: $gene_row\n";
 # check for granularity
  my $functions_ref = ConciseDescriptions::get_granular_array($ontology, $gene_row, "", "", \%parents);
  my @functions = @{$functions_ref};
- my $exp_functions_ref = get_exp_go_array(\@functions);
- my @exp_functions=@$exp_functions_ref;
- my $iss_functions_ref = get_stat_go_array(\@functions);
- my @iss_functions=@$iss_functions_ref;
- my $iea_functions_ref = get_iea_go_array(\@functions);
- my @iea_functions=@$iea_functions_ref;
- my $iea_function_string="";
- my $iss_function_string="";
- my $exp_function_string="";
- 
- if (@iea_functions){
-      my $ieaf_string="";
-      foreach my $ieaf (@iea_functions){
-       $ieaf_string .= "$ieaf\t";
+ if (@functions){
+    my $function_count=0;
+    foreach my $function (@functions){
+          $function_count++;
+     next if ($function=~/$gene_id/);
+     next if ($function=~/$gene_name/);
+
+          if ($function_count > 0){
+          my ($evidence) = $function =~ /\[(.*)\]/;
+             if ($evidence) {
+                 $function =~ s/\[$evidence\]//g;
+             }
+             $function =~ s/^\s+//;
+             $function =~ s/\s+$//;
+     my $go_term = ConciseDescriptions::get_ontology_term($function, \%gene_ontology);  
+     if ($go_term){
+     if ( $go_term !~ /activity/) { 
+          $go_term =~s/binding/binding activity/g;
      }
-     $iea_function_string = get_function_string($iea_functions_ref, "IEA", \%gene_ontology);
-#     print "iea string\t$ieaf_string\t$iea_function_string\n";
- }
- if (@iss_functions){
-      my $issf_string="";
-      foreach my $issf (@iss_functions){
-       $issf_string .= "$issf\t";
+     if ( lc($go_term) !~/obsolete/ ) {
+       push(@GO_functions, $go_term);
      }
-     $iss_function_string = get_function_string($iss_functions_ref, "ISS", \%gene_ontology);
-#     print "iss string\t$issf_string\t$iss_function_string\n";
- }
- if (@exp_functions){
-     $exp_function_string = get_function_string($exp_functions_ref, "EXP", \%gene_ontology);
- }
- foreach my $function (@iea_functions){
-  push (@GO_functions, $function);
- }
- foreach my $function (@iss_functions){
-  push (@GO_functions, $function);
- }
- foreach my $function (@exp_functions){
-  push (@GO_functions, $function);
- }
- if ((@exp_functions) and (@iss_functions) and (@iea_functions)){
-     $function_string = $exp_function_string . " and " . $iss_function_string . " and " . $iea_function_string;
- } elsif ((@exp_functions) and (@iss_functions)) {
-     $function_string = $exp_function_string . " and " . $iss_function_string;
- } elsif ((@exp_functions) and (@iea_functions)) {
-     $function_string = $exp_function_string . " and " . $iea_function_string;
- } elsif ((@iss_functions) and (@iea_functions)) {
-     $function_string = $iss_function_string . " and " . $iea_function_string;
- } elsif (@exp_functions) {
-     $function_string = $exp_function_string;
- } elsif (@iss_functions) {
-     $function_string = $iss_function_string;
- } elsif (@iea_functions){
-     $function_string = $iea_function_string;
- }
-#      my ($evidence) = $function_string =~ /\[(.*)\]/;
-#      if ($evidence) {
-#          $function_string =~ s/\[$evidence\]//g;
-#      }
+    }
+    }
+    } # foreach functions
+    if (@GO_functions){
+      @GO_functions = uniq(sort(@GO_functions));
+      $function_string = get_verb_function_goterm(\@GO_functions);
+#      $function_string .= "\;\n";
       $function_string =~ s/^\s+//;
       $function_string =~ s/\s+$//;
       $function_string =~ s/ \,/\,/g;
@@ -302,46 +313,99 @@ foreach my $gene_id (@gene_array){
       $function_string =~ s/$nadp//g;
       $function_string =~ s/$doublecomma/$comma/g;     
       $function_string =~ s/ +/ /g;
-
-} # if gene function string
- my $gene_component = $elegans_component_hash{$gene_id};
+     }
+# Remove evidence codes
+ } # if gene_functions array
+}
+ my $gene_component = $gene_component_hash{$gene_id};
  if ($gene_component){
   my $gene_row = $gene_id . "\," . $gene_name . "\," . $gene_component;
  if ($gene_component){
-    @gene_components = split(/\t/, $gene_component);
+    @gene_components = split(/\,/, $gene_component);
  }
-   my $components_ref = ConciseDescriptions::get_granular_array($ontology, $gene_row, "IEA", "ISS", \%parents);
+   my $components_ref = ConciseDescriptions::get_granular_array($ontology, $gene_row, "", "", \%parents);
    my @components = @{$components_ref};
+#
+# Check if any components are adjectives 
+#
+   my @new_component_adjectives=();
+   if (@components){
+     my $pointer = 0;
+      while ($pointer <= $#components) {
+       my $component = $components[$pointer];
+       foreach my $adjective (@component_adjectives){
+        if ($component =~/$adjective/){
+           push(@new_component_adjectives, $component);
+           splice(@components, $pointer, 1);
+        } else {
+           $pointer++;
+        } 
+       } 
+     }
+   }
+
+ my $adj_phrase = " is ";
+ my $adj_sentence;
+ my $adj_count = @new_component_adjectives; 
+
+ if ($adj_count > 0){
+   my $count = 0;
+   $adj_sentence = $adj_phrase;
+   foreach my $adj (@new_component_adjectives){
+             my ($evidence) = $adj =~ /\[(.*)\]/;
+             if ($evidence) {
+                 $adj =~ s/\[$evidence\]//g;
+             }
+             $adj =~ s/^\s+//;
+             $adj =~ s/\s+$//;
+     my $go_term = "";
+     $go_term = ConciseDescriptions::get_ontology_term($adj, \%gene_ontology);
+     next if ($go_term eq "");
+     next if (lc($go_term) =~/obsolete/);
+     my $count++;
+     if (($count == 1) and ($adj_count < 3)) {
+      $adj_sentence .= $go_term;
+     } elsif (($count < ($adj_count-1)) and ($adj_count > 2)){
+       $adj_sentence .= $go_term . "\,";
+     } elsif (($count == $adj_count) and ($adj_count > 1)){
+       $adj_sentence .= " and " . $go_term;
+     }
+  }
+ }
+
+#
    my $component_count = 0;
    if (@components) {
     foreach my $component (@components){
     $component_count++;
-    if ($component_count gt 2){
-     next if ($component =~/\[IEA\]/);
-     next if ($component =~/\[ISS\]/);
+     next if ($component=~/$gene_id/);
+     next if ($component=~/$gene_name/);
+
+    if ($component_count > 0){
              my ($evidence) = $component =~ /\[(.*)\]/;
              if ($evidence) {
                  $component =~ s/\[$evidence\]//g;
              }
              $component =~ s/^\s+//;
              $component =~ s/\s+$//;
-           
-     my $go_term = ConciseDescriptions::get_ontology_term($component, \%gene_ontology);
-        $go_term .="[$evidence]";  
-     push(@GO_components, $go_term);
+     my $go_term = "";
+        $go_term = ConciseDescriptions::get_ontology_term($component, \%gene_ontology);
+     if ($go_term){
+      if (lc($go_term) !~/obsolete/) {  
+       push(@GO_components, $go_term);
+      }
+     }
     }
    } # foreach components
        if (@GO_components){
+        @GO_components = uniq(sort(@GO_components));
         $component_string = get_verb_component_goterm(\@GO_components);
-
+        print "component $component_string\n";
         $component_string =~ s/$component_watch_string/$component_watch_string_the/g;
+        $component_string =~ s/$structural/$is_structural/g;
         $component_string =~ s/$the_the/$the/g;
         $component_string =~ s/$blank_comma/$comma/g;
-my @evidences=("EXP","IMP","IGI","IPI","IDA","IEP","IEA","ISS","ISA","ISO","ISM","IGC","IBA","IBD","IKR","IRD","RCA","TAS","NAS","ND","IC");
-# Remove evidence codes
-         foreach my $ec (@evidences){
-	    $component_string =~ s/\[$ec\]//g;
-         }
+
         $component_string =~ s/ +/ /g;
         $component_string =~ s/^\s+//;
         $component_string =~ s/\s+$//;
@@ -352,13 +416,13 @@ my @evidences=("EXP","IMP","IGI","IPI","IDA","IEP","IEA","ISS","ISA","ISO","ISM"
  }
   my $sentence = "";
   if ((@GO_components) and (@GO_processes) and (@GO_functions)){
-    $sentence = $gene_name . " " . $process_string . "\; " . $gene_name . " " . $function_string . "\; " . $gene_name . " " . $component_string;
+    $sentence = $gene_name . " " . $process_string . "\, " . $function_string . " and " . $component_string;
   } elsif ((@GO_processes) and (@GO_functions)){
-    $sentence = $gene_name . " " . $process_string . "\; " . $gene_name . " " . $function_string;
+    $sentence = $gene_name . " " . $process_string . " and " . $function_string;
   } elsif ((@GO_components) and (@GO_functions)){
-    $sentence = $gene_name . " " . $function_string . "\; " . $gene_name . " " . $component_string;
+    $sentence = $gene_name . " " . $function_string . " and " . $component_string;
   } elsif ((@GO_components) and (@GO_processes)){
-    $sentence = $gene_name . " " . $process_string . "\; " . $gene_name . " " . $component_string;
+    $sentence = $gene_name . " " . $process_string . " and " . $component_string;
   } elsif (@GO_components){
     $sentence = $gene_name . " " . $component_string;
   } elsif (@GO_processes){
@@ -374,43 +438,83 @@ my @evidences=("EXP","IMP","IGI","IPI","IDA","IEP","IEA","ISS","ISA","ISO","ISM"
           my $doublespace = "  ";
           my $space = " ";
 # remove any double spaces
+          $sentence =~ s/$structural/$is_structural/g;
+          $sentence =~ s/$is_is/$is/g;
+          $sentence =~s/$is_a_is_a/$is_a/g;
           $sentence =~s/$doublespace/$space/g;
+          $sentence =~s/$the_cell_0/$the_cell_1/g;
+          $sentence =~s/$growth_0/$growth_1/g;
+# if sentence has data based on protein domain information, that information should be first.
+         if ($species !~/elegans/){
+          if ($sentence =~/$helper_string_after_iea/){
+           my $tmp = $sentence;
+           $tmp =~s/$helper_string_after_iea//g;
+           $sentence = $helper_string_before_iea . $tmp;
+          }
+          if (($sentence !~/$helper_string_before_iea/) and ($sentence)) {
+           my $tmp = $sentence;
+           $sentence = $helper_string_before_iea . $tmp;
+          }
+         }
 # add semi-colon at end
 #          $sentence .= "\;";
-      if (length($sentence) gt 0){
+# add ortholog sentence
+           my $ortholog_sentence = "";
+      if (length($sentence) > 0){
               $sentence .= "\.";
+      
        my $out = $individual_path . $gene_id;
         write_file($out, $sentence);
         write_file($output_file, {append => 1 }, $sentence);
         write_file($output_file, {append => 1 }, "\n\n\n");
        }
  }
-}
 exit(0);
 
-sub get_wbgene_name_elegans_hash{
+sub get_gene_array{
  my $file = shift;
- my %hash=();
+ my @array=();
  my @lines = read_file($file);
   foreach my $line (@lines){
-  my @fields = split(/\t/, $line);
-  my $gene_name = $fields[2];
-  my $gene_id = $fields[1];
-  if ($gene_name){
-       $hash{$gene_name} = $gene_id;
-   }
+   next if ($line =~/\!/);
+   chomp($line);
+   my @fields = split(/\t/, $line);
+   my $gene_id = $fields[1];
+      $gene_id =~ s/^\s+//;
+      $gene_id =~ s/\s+$//;
+   if ($gene_id){
+    push(@array, $gene_id);  
+  }
  }
- return \%hash;
+  my @sorted_array = sort(uniq(@array));
+  
+ return \@sorted_array;
 }
 sub get_gene_name_hash{
  my $file = shift;
+ my $second_file = shift;
  my %hash=();
  my @lines = read_file($file);
   foreach my $line (@lines){
    next if ($line =~/\!/);
+   chomp($line);
    my @fields = split(/\t/, $line);
    my $gene_id = $fields[1];
    my $gene_name = $fields[2];
+      $gene_name =~ s/^\s+//;
+      $gene_name =~ s/\s+$//;
+      $gene_id   =~ s/^\s+//;
+      $gene_id   =~ s/\s+$//;
+   if ($gene_id){
+    $hash{$gene_id} = $gene_name;
+  }
+ }
+ my @second_lines = read_file($second_file);
+  foreach my $line (@second_lines){
+   chomp($line);
+   my @fields = split(/\t/, $line);
+   my $gene_id = $fields[0];
+   my $gene_name = $fields[1];
       $gene_name =~ s/^\s+//;
       $gene_name =~ s/\s+$//;
       $gene_id   =~ s/^\s+//;
@@ -426,12 +530,26 @@ sub get_gene_go_hash{
  my $go = shift;
  my $ec = shift;
  my %hash=();
- 
+ my @exp_ec = ("EXP", "IDA", "IPI", "IMP", "IGI", "IEP");
+
  $go =~ s/^\s+//;
  $go =~ s/\s+$//;
  my @lines = read_file($file);
   foreach my $line (@lines){
    next if ($line =~/\!/);
+   next if ($line =~/UniProt/);
+   next if ($line =~/IBA/);
+   next if ($line =~/IBD/);
+   next if ($line =~/GO\:0003674/); # veto molecular_function
+   next if ($line =~/GO\:0005554/); # veto molecular_function alt_id
+   next if ($line =~/GO\:0005575/); # veto cellular_component
+   next if ($line =~/GO\:0008372/); # veto cellular_component alt_id
+   next if ($line =~/GO\:0008150/); # veto biological_process
+   next if ($line =~/GO\:0000004/); # veto biological_process alt_id
+   next if ($line =~/GO\:0007582/); # veto biological_process alt_id
+   next if ($line =~/GO\:0005488/); # veto binding
+   next if ($line =~/GO\:0005515/); # veto protein binding
+   chomp($line);
    my @fields = split(/\t/, $line);
    my $gene_id = $fields[1]; 
    my $go_term = $fields[4]; 
@@ -447,76 +565,62 @@ sub get_gene_go_hash{
    } else{
        $term = $go_term;
    }
-   if ($term){
-    if (($term !~/GO\:0005488/)and($term !~/GO\:0005515/)){
+
+   if ($go_term){
    if ($go =~/$GO/){
     if ($hash{$gene_id}){
+     if ($hash{$gene_id}!~/$go_term/g){
+       if (($evidence_code) and ($ec)) {
+         $term = $go_term . "\[" . $evidence_code . "\]";
+       } else {
+         $term = $go_term;
+       }
         $hash{$gene_id} .= "\, " . $term;
+     } elsif ((grep {$_ =~ $evidence_code} @exp_ec) and ($ec)) {
+         my $temp_string = $hash{$gene_id};
+         my ($evidence) = $temp_string =~ /$go_term\[(\w+)\]/;
+         print "evidence is $evidence\n";
+         if (grep {$_ =~ $evidence} @exp_ec) {
+          print "$gene_id\t$go_term\t$evidence\t$hash{$gene_id}\n";
+         } elsif ($evidence !~ $evidence_code) {
+          my $old =  $go_term . "\[" . $evidence . "\]";
+          my $replace = $go_term . "\[" . $evidence_code . "\]";
+            $temp_string =~ s/$old/$replace/g;
+            $hash{$gene_id} = $temp_string;
+         }
+#         my $replace = $go_term . "\[" . $evidence_code . "\]";
+#            $temp_string =~ s/$go_term\[[^\]]*\]/$replace/g;
+#            $hash{$gene_id} = $temp_string;
+     }
     } else {
+       if (($evidence_code) and ($ec)) {
+         $term = $go_term . "\[" . $evidence_code . "\]";
+       } else{
+         $term = $go_term;
+       }
         $hash{$gene_id} = $term;
     }
    }
   }
-  }
- } 
+
+  } 
  return \%hash;
 }
-sub get_verb_process_goterm{
-    my $goterms_ref = shift;
-    my $imp = shift;
-    my $imp_string = " based on mutant phenotype";
-    my @goterms = @$goterms_ref;
-    my $verb_goterm="";
-# 
-# The following was added (untested) to incorporate an IMP, "based on mutant phenotype".
-# cluster the GO terms
 
-   if ($imp !~/IMP/){
-       $verb_goterm = get_verb_goterm_process(\@goterms);
- } else {     
-    my @IMP=();
-    my @other_ec =();
-    if (@goterms){
-       foreach my $goterm (@goterms){
-         if ($goterm =~/\[IMP\]/){
-            push(@IMP, $goterm);
-         } else {
-            push(@other_ec, $goterm);
-         }
-      } 
-    }
- my $phrase_imp = "";
- if (@IMP){
-   $phrase_imp = get_verb_goterm_process(\@IMP);
-   $phrase_imp .= $imp_string;
- }
- my $phrase_other_ec="";
- if (@other_ec){
-   $phrase_other_ec = get_verb_goterm_process(\@other_ec);
- }
- if (($phrase_imp) and ($phrase_other_ec)){
-    $verb_goterm = $phrase_other_ec . " and " . $phrase_imp;
- } elsif ($phrase_imp){
-    $verb_goterm = $phrase_imp;
- } elsif ($phrase_other_ec){
-    $verb_goterm = $phrase_other_ec;
-  }
- } 
- return $verb_goterm;
-}
-sub get_verb_goterm_process{
+sub get_verb_process_goterm{
     my $goterms_ref = shift;
     my $helper_string_0 = " is involved in ";
     my $helper_string_1 = " functions in ";
     my $watch_string = "involved in";
+
     my @goterms = @$goterms_ref;
     my $helper_string="";
     my $verb_goterm="";
-#
        if (@goterms){
          my $count = 0;
          my $verb_count = 0;
         foreach my $goterm (@goterms){
+#        chomp($goterm);
         if (@goterms == 1){
          $helper_string = $helper_string_0;
            if ( $goterm =~/$watch_string/){
@@ -530,7 +634,7 @@ sub get_verb_goterm_process{
            if ( $goterm =~/$watch_string/){
                 $helper_string = $helper_string_1;
            }
-           if ($count gt 0) {
+           if ($count > 0) {
             if ($verb_goterm =~ $helper_string){
              $verb_goterm .= " and ";
              $verb_goterm .= $goterm;
@@ -544,14 +648,14 @@ sub get_verb_goterm_process{
              $verb_goterm = $helper_string . $goterm;
            }
 
-       } elsif (@goterms gt 2) {
+       } elsif (@goterms > 2) {
             $helper_string = $helper_string_0;
            if ( $goterm =~/$watch_string/){
                 $helper_string = $helper_string_1;
            }
          if ($count eq 0) {
              $verb_goterm = $helper_string . $goterm;
-         } elsif ($count lt  @goterms-1) {
+         } elsif ($count < (@goterms-1)) {
 
             if ($verb_goterm =~ $helper_string){
              $verb_goterm .= "\, ";
@@ -562,7 +666,7 @@ sub get_verb_goterm_process{
              $verb_goterm .= $goterm;               
             }
 
-         } elsif ($count ge @goterms-1) {
+         } elsif ($count >= (@goterms-1)) {
             if ($verb_goterm =~ $helper_string){
              $verb_goterm .= " and ";
              $verb_goterm .= $goterm;
@@ -576,41 +680,21 @@ sub get_verb_goterm_process{
          $count++;
         } # goterms loop
        } # goterms gt 0
-
- return $verb_goterm; 
+ 
+ return $verb_goterm;
 }
-sub get_verb_function_goterm{
+sub get_verb_function_goterm_exp{
        my $goterms_ref = shift;
-       my $ec = shift;
-
-       my $helper_string_before_iea = " is predicted to have ";
-       my $helper_string_before_iea_1 = " is predicted to be ";
-       my $helper_string_after_iea = "\, based on protein domain information";
-
-       my $helper_string_before_iss = " is predicted to have ";
-       my $helper_string_after_iss = "\, based on sequence information";
-
+#
        my $helper_string_before_exp = " exhibits ";
 #      as per R. Kishore's changes
 #       my $helper_string_after_exp = "\, based on experimental evidence";
        my $helper_string_after_exp = "";
+       my $helper_string_before=$helper_string_before_exp; 
+       my $helper_string_after=$helper_string_after_exp; 
 
-       my $helper_string_before=""; 
-       my $helper_string_after=""; 
-
-       if ($ec =~ /IEA/){
-        $helper_string_before=$helper_string_before_iea; 
-        $helper_string_after=$helper_string_after_iea;
-       } 
-       if ($ec =~ /ISS/){
-        $helper_string_before=$helper_string_before_iss; 
-        $helper_string_after=$helper_string_after_iss;
-       } 
-       if ($ec =~ /EXP/){
-        $helper_string_before=$helper_string_before_exp; 
-        $helper_string_after=$helper_string_after_exp;
-       } 
-
+#       my $helper_string_before = shift;
+#       my $helper_string_after  = shift;
        my $verb_goterm="";
        my $watch_string_0 = "activity";
        my $watch_string_1 = "structural constituent";
@@ -647,7 +731,7 @@ sub get_verb_function_goterm{
                 $helper_string_1 = "";
             }
 
-           if ($count gt 0) {
+           if ($count > 0) {
 
            if ( $goterm !~/$watch_string_0/){
                 $helper_string_0 = "";
@@ -679,7 +763,7 @@ sub get_verb_function_goterm{
                $verb_goterm = $helper_string_0 . $goterm ;
            }
 
-       } elsif (@goterms gt 2) {
+       } elsif (@goterms > 2) {
 
            if ( $goterm !~/$watch_string_0/){
                 $helper_string_0 = "";
@@ -687,7 +771,7 @@ sub get_verb_function_goterm{
             }
 
 
-         if ($count eq 0) {
+         if ($count == 0) {
             if ( $goterm =~/$watch_string_1/){
                 $helper_string_0 = "";
                 $helper_string_1 = " and " . $helper_string_before;
@@ -698,7 +782,7 @@ sub get_verb_function_goterm{
            } else {
                              $verb_goterm = $helper_string_0 . $goterm . "\, ";
            }
-         } elsif ($count lt  @goterms-1){
+         } elsif ($count < (@goterms-1)){
 
              if (($verb_goterm =~ $helper_string_1) and ($goterm !~ $watch_string_1)) {
                 $verb_goterm .= $goterm . "\, ";
@@ -711,7 +795,7 @@ sub get_verb_function_goterm{
              $verb_goterm .= $goterm;             
              $verb_goterm .= $helper_string_1;  
             }
-         } elsif ($count ge @goterms-1) {
+         } elsif ($count >= (@goterms-1)) {
                   $helper_string_0=$helper_string_before;
                   $helper_string_1=$helper_string_after;
 
@@ -735,7 +819,148 @@ sub get_verb_function_goterm{
          $count++;
         } # goterms loop
        } # goterms gt 0 
-# print "calculating $verb_goterm\n";
+
+ return $verb_goterm;
+}
+sub get_verb_function_goterm{
+       my $goterms_ref = shift;
+# assuming that the evidence codes are IEA for now.
+       my $helper_string_before_iea = " is predicted to have ";
+       my $helper_string_before_iea_1 = " is predicted to be ";
+       my $helper_string_before_iss = " is predicted to have ";
+       my $helper_string_after_iea = "\, based on protein domain information";
+       my $helper_string_after_iss = "\, based on sequence information";
+
+       my $helper_string_before=$helper_string_before_iea; 
+       my $helper_string_after=$helper_string_after_iea; 
+
+#       my $helper_string_before = shift;
+#       my $helper_string_after  = shift;
+       my $verb_goterm="";
+       my $watch_string_0 = "activity";
+       my $watch_string_1 = "structural constituent";
+
+       my $helper_string_0=$helper_string_before;
+       my $helper_string_1=$helper_string_after;
+
+       my @goterms = @{$goterms_ref};
+       if (@goterms){
+         my $count = 0;
+         my $verb_count = 0;
+         my $goterm="";
+        foreach $goterm (@goterms){
+        chomp($goterm);
+        if (@goterms == 1){
+
+         $helper_string_0=$helper_string_before;
+         $helper_string_1=$helper_string_after;
+
+           if ( $goterm =~/$watch_string_1/){
+                $helper_string_0 = " is a ";
+                $helper_string_1 = $helper_string_after;
+           }
+
+         $verb_count++;
+         $verb_goterm =  $helper_string_0 . $goterm . $helper_string_1;      
+       } elsif (@goterms == 2){ 
+
+         $helper_string_0=$helper_string_before;
+         $helper_string_1=$helper_string_after;
+
+           if ( $goterm !~/$watch_string_0/){
+                $helper_string_0 = "";
+                $helper_string_1 = "";
+            }
+
+           if ($count > 0) {
+
+           if ( $goterm !~/$watch_string_0/){
+                $helper_string_0 = "";
+                $helper_string_1 = "";
+            }
+
+            if ($verb_goterm =~ $helper_string_0){
+             $verb_goterm .= " and ";
+             $verb_goterm .= $goterm;
+             $verb_goterm .= $helper_string_1; 
+            } else {
+             $verb_goterm .= " and ";
+             $verb_goterm .= $helper_string_0;    
+             $verb_goterm .= $goterm;        
+             $verb_goterm .= $helper_string_1; 
+            }
+
+           } else {
+
+           if ( $goterm !~/$watch_string_0/){
+                $helper_string_0 = "";
+            }
+
+           if ( $goterm =~/$watch_string_1/){
+                $helper_string_0 = "";
+                $helper_string_1 = $helper_string_after;
+           }
+
+               $verb_goterm = $helper_string_0 . $goterm ;
+           }
+
+       } elsif (@goterms > 2) {
+
+           if ( $goterm !~/$watch_string_0/){
+                $helper_string_0 = "";
+                $helper_string_1 = "";
+            }
+
+
+         if ($count == 0) {
+            if ( $goterm =~/$watch_string_1/){
+                $helper_string_0 = "";
+                $helper_string_1 = " and " . $helper_string_before;
+           }
+
+           if ( $goterm =~/$watch_string_1/){
+                            $verb_goterm = $helper_string_0 . $goterm . $helper_string_1;
+           } else {
+                             $verb_goterm = $helper_string_0 . $goterm . "\, ";
+           }
+         } elsif ($count < (@goterms-1)){
+
+             if (($verb_goterm =~ $helper_string_1) and ($goterm !~ $watch_string_1)) {
+                $verb_goterm .= $goterm . "\, ";
+            } elsif ($verb_goterm =~ $helper_string_0) {
+             $verb_goterm .= "\, ";
+             $verb_goterm .= $goterm;
+            } else {
+             $verb_goterm .= "\, and "; 
+             $verb_goterm .= $helper_string_0;    
+             $verb_goterm .= $goterm;             
+             $verb_goterm .= $helper_string_1;  
+            }
+         } elsif ($count >= (@goterms-1)) {
+                  $helper_string_0=$helper_string_before;
+                  $helper_string_1=$helper_string_after;
+
+            if (($verb_goterm =~ $helper_string_0) and ($goterm !~ $watch_string_1)) {
+                 $verb_goterm .= "\, and ";
+                 $verb_goterm .= $goterm;
+                 $verb_goterm .= $helper_string_1; 
+            } elsif ($verb_goterm =~ $helper_string_0){
+             $verb_goterm .= "\, and ";
+             $verb_goterm .= $goterm;
+             $verb_goterm .= $helper_string_1; 
+            } elsif (($verb_goterm !~ $helper_string_1) or ($goterm =~ $watch_string_1)) {
+             $verb_goterm .= "\, and ";
+             $verb_goterm .= $helper_string_0;    
+             $verb_goterm .= $goterm;             
+             $verb_goterm .= $helper_string_1;  
+            }
+
+         } 
+        }
+         $count++;
+        } # goterms loop
+       } # goterms gt 0 
+
  return $verb_goterm;
 }
 sub get_verb_component_goterm{
@@ -743,6 +968,7 @@ sub get_verb_component_goterm{
        my @goterms = @$goterms_ref;
        my $verb_goterm="";
        my $helper_string = "";
+# assuming that the evidence codes are IEA for now.
        my $watch_string = "integral component of";
        my $watch_string_the = "integral component of the";
        my $helper_string_0 = " is localized to the ";
@@ -752,6 +978,8 @@ sub get_verb_component_goterm{
          my $verb_count = 0;
          my $goterm="";
         foreach $goterm (@goterms){
+#        chomp($goterm);
+
         if (@goterms == 1){
          $helper_string = $helper_string_0;
            if ( $goterm =~/$watch_string/){
@@ -765,7 +993,7 @@ sub get_verb_component_goterm{
            if ( $goterm =~/$watch_string/){
                 $helper_string = $helper_string_1;
            }
-           if ($count gt 0) {
+           if ($count > 0) {
             if ($verb_goterm =~ $helper_string){
              $verb_goterm .= " and the ";
              $verb_goterm .= $goterm;
@@ -779,14 +1007,14 @@ sub get_verb_component_goterm{
              $verb_goterm = $helper_string . $goterm;
            }
 
-       } elsif (@goterms gt 2) {
+       } elsif (@goterms > 2) {
             $helper_string = $helper_string_0;
            if ( $goterm =~/$watch_string/){
                 $helper_string = $helper_string_1;
            }
-         if ($count eq 0) {
+         if ($count == 0) {
              $verb_goterm = $helper_string . $goterm;
-         } elsif ($count lt  @goterms-1) {
+         } elsif ($count < (@goterms-1)) {
 
             if ($verb_goterm =~ $helper_string){
              $verb_goterm .= "\, the ";
@@ -797,7 +1025,7 @@ sub get_verb_component_goterm{
              $verb_goterm .= $goterm;               
             }
 
-         } elsif ($count ge @goterms-1) {
+         } elsif ($count >= (@goterms-1)) {
             if ($verb_goterm =~ $helper_string){
              $verb_goterm .= " and the ";
              $verb_goterm .= $goterm;
@@ -831,98 +1059,4 @@ sub get_exp_go_array{
   my @sorted_array = sort(uniq(@array));
   
  return \@sorted_array;
-}
-sub get_stat_go_array{
- my $go_array_ref = shift;
- my @array=();
- my @go_array = @$go_array_ref;
-  foreach my $go (@go_array){
-        $go =~ s/^\s+//;
-        $go =~ s/\s+$//;
-   if ( ($go =~/\[ISS\]/) or 
-  ($go =~/\[ISO\]/) or ($go =~/\[ISA\]/) or 
-  ($go =~/\[ISM\]/) or ($go =~/\[IGC\]/) or 
-  ($go =~/\[IBA\]/) or ($go =~/\[IBD\]/) or 
-  ($go =~/\[IKR\]/) or ($go =~/\[IRD\]/) or
-  ($go =~/\[RCA\]/) ) {
-    push(@array, $go);  
-  }
- }
-  my @sorted_array = sort(uniq(@array));
-  
- return \@sorted_array;
-}
-sub get_iea_go_array{
- my $go_array_ref = shift;
- my @array=();
- my @go_array = @$go_array_ref;
-  foreach my $go (@go_array){
-        $go =~ s/^\s+//;
-        $go =~ s/\s+$//;
-   if (($go =~/\[IEA\]/) or 
-  ($go =~/\[TAS\]/) or ($go =~/\[NAS\]/) or 
-  ($go =~/\[IC\]/) or ($go =~/\[ND\]/)) {
-    push(@array, $go);  
-  }
- }
-  my @sorted_array = sort(uniq(@array));
-  
- return \@sorted_array;
-}
-sub get_function_string {
- my $functions_array_ref = shift;
- my $ec = shift;
- my $gene_ontology_ref = shift;
- my $function_string = "";
- my @functions = @$functions_array_ref;
- my @GO_functions = ();
- 
- if (@functions){
-    my $function_count=0;
-    foreach my $function (@functions){
-#          print "function is $function\n";
-          next if ($function =~/GO\:0005488/); # ignore binding
-          next if ($function =~/GO\:0005515/); # ignore protein binding
-          $function_count++;
-          if ($function_count gt 0){
-#          print "function is $function\n";
-          my ($evidence) = $function =~ /\[(.*)\]/;
-             if ($evidence) {
-                 $function =~ s/\[$evidence\]//g;
-             }
-             $function =~ s/^\s+//;
-             $function =~ s/\s+$//;
-     my $go_term = ConciseDescriptions::get_ontology_term($function, $gene_ontology_ref);  
-     $go_term .= "[$evidence]";
-     if ( $go_term !~ /activity/) { 
-          $go_term =~s/binding/binding activity/g;
-     }  
-#     print "goterm is $go_term\n";
-     push(@GO_functions, $go_term);
-    }
-    } # foreach functions
-
-    if (@GO_functions){
-       my $gof_string = "";
-       foreach my $gof (@GO_functions){
-        $gof_string .= "$gof\t";
-       }
-       $function_string = get_verb_function_goterm(\@GO_functions, $ec);
-#       print "$gof_string\t\nfunction string is $function_string\n";
-      }
-my @evidences=("EXP","IMP","IGI","IPI","IDA","IEP","IEA","ISS","ISA","ISO","ISM","IGC","IBA","IBD","IKR","IRD","RCA","TAS","NAS","ND","IC");
-# Remove evidence codes
-         foreach my $ec (@evidences){
-	    $function_string =~ s/\[$ec\]//g;
-         }
-      $function_string =~ s/^\s+//;
-      $function_string =~ s/\s+$//;
-      $function_string =~ s/ \,/\,/g;
-# Remove evidence codes
- my $size = @functions;
-# print "$size\tfunction string is $function_string\n";
-
- } # if gene_functions array
-
- return $function_string;
 }

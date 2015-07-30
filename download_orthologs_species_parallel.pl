@@ -18,9 +18,14 @@ my $home = $html . "concise_descriptions/";
 #
 my $RELEASE = ConciseDescriptions::get_release(); 
 my $PRODUCTION_RELEASE = ConciseDescriptions::get_production_release();
-
-my $species = $ARGV[0];
-my $project = $ARGV[1];
+my $AND = "AND";
+my $species_project = $ARGV[0];
+ chomp($species_project);
+my ($species, $project) = split(/$AND/, $species_project);
+ $species =~s/^\s+//;
+ $species =~s/\s+$//;
+ $project =~s/^\s+//;
+ $project =~s/\s+$//;
 #
 my $orthology_dir = $home . "release/$PRODUCTION_RELEASE/$species/orthology/input_files/";
 #
@@ -38,22 +43,34 @@ if (-e $output_file){
 }
 #
 my $url = "ftp://ftp.sanger.ac.uk/pub/wormbase/releases/$RELEASE/species/$species/$project/annotation/$species.$project.$RELEASE.orthologs.txt.gz";
+my $url2 = "ftp://ftp.sanger.ac.uk/pub/wormbase/releases/$RELEASE/species/$species/$project/annotation/$species.$project.$RELEASE.orthologs.txt";
 #
-getstore($url, $local_file);
-if (-e $local_file){
-    $unzipped_file =$local_file;
-    $unzipped_file =~s/\.gz//g;
-}
-if (-e $unzipped_file){
-   @args = ("/bin/rm", "-f", $unzipped_file);
-   system(@args) == 0 or die("could not delete file $unzipped_file\n");
-}
- @args = ("/bin/gunzip", $local_file);
-$status = system(@args);
-#
-if (-e $unzipped_file){
- @args = ("/bin/ln","-s",$unzipped_file,$output_file);
+if (head($url)){
+ print "$url exists\n";
+ LWP::Simple::getstore($url, $local_file);
+ if (-e $local_file){
+     $unzipped_file =$local_file;
+     $unzipped_file =~s/\.gz//g;
+  }
+ if (-e $unzipped_file){
+    @args = ("/bin/rm", "-f", $unzipped_file);
+    system(@args) == 0 or die("could not delete file $unzipped_file\n");
+ }
+  @args = ("/bin/gunzip", $local_file);
  $status = system(@args);
+#
+ if (-e $unzipped_file){
+  @args = ("/bin/ln","-s",$unzipped_file,$output_file);
+  $status = system(@args);
+  }
+} elsif (head($url2)){
+  print "$url2 exists\n";
+  LWP::Simple::getstore($url2, $output_file);
+  if (-e $output_file){
+   print "file copied to $output_file\n";
+  } else {
+   print "$output_file not copied\n";
+  }
 }
 #
 exit 0;

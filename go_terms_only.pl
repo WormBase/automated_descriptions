@@ -14,7 +14,7 @@ my $path = $html . "concise_descriptions/release/$PRODUCTION_RELEASE/c_elegans/g
 
 my $url= 'http://geneontology.org/ontology/go.obo';
 my $input_file = 'go.obo';
-my $output_file = $path . "newterms.txt";
+my $output_file = $path . "go_terms.txt";
 
 getstore($url, $input_file);
 
@@ -26,7 +26,7 @@ my $text = read_file( $input_file ) ;
 $text =~s/expand\_assertion\_to\:\s\"Class\:\s\<http\:\/\/www\.w3\.org\/2002\/07\/owl\#Nothing\>\sEquivalentTo\:\s\?X\sand\s\(RO\_0002162\ssome\s\?Y\)\"\s\[\]//gi;
 $text =~s/property\_value\: propformat\-version \"1\.2\" xsd\:string//gi;
 $text =~s/property\_value\: IAO\:0000589 \"cell and encapsulating structures\" xsd\:string//gi;
-
+$text =~s/expand\_assertion\_to\: \"Class\: \?X DisjointWith\: RO\_0002162 some \?Y\" \[\]//gi;
 write_file( $input_file, \$text ) ;
 			
 my $my_parser = OBO::Parser::OBOParser->new();
@@ -37,11 +37,16 @@ my $my_term="";
 
 foreach my $term (sort {$a->id() cmp $b->id()} @{$ontology->get_terms()}) {
         if ( defined ($term->id()) && defined($term->name()) ) {
+               my $id = $term->id();
+               my $name = $term->name();
             if ( $term->is_obsolete() ){
-                 $my_term = $term->name() . "\t \(" . $term->id() . "\)" . " \( Obsolete \) \n";
+                  print "$name\t$id is obsolete\.\n";
+#                 $my_term = $term->name() . "\t \(" . $term->id() . "\)" . " \( Obsolete \) \n";
                }
                else{
-                     $my_term = $term->name() . "\t \(" . $term->id() . "\)\n";
+                    if (lc ($name) !~/obsolete/){
+                      $my_term = $name . "\t \(" . $id . "\)\n";
+                    }
                    }
 	    push @terms, $my_term;
         }

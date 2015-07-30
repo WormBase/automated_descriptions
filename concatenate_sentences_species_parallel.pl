@@ -9,10 +9,19 @@ use warnings;
 # http://wiki.wormbase.org/index.php/Generation_of_automated_descriptions
 #
 #
-my $species = $ARGV[0];
-my $project = $ARGV[1];
-my $species_name = $ARGV[2];
-my $species_prefix = $ARGV[3];
+my $AND = "AND";
+my $species_project_name_prefix = $ARGV[0];
+chomp($species_project_name_prefix);
+my ($species, $project, $species_name, $species_prefix) = split(/$AND/, $species_project_name_prefix);
+ $species =~s/^\s+//;
+ $species =~s/\s+$//;
+ $project =~s/^\s+//;
+ $project =~s/\s+$//;
+ $species_name =~ s/^\s+//;
+ $species_name =~ s/\s+$//;
+ $species_prefix =~ s/\s+$//;
+ $species_prefix =~ s/^\s+//;
+
 # The path for the output file is $functions_dir; 
 # the path for the individual gene descriptions is $individual_path.
 #
@@ -56,6 +65,13 @@ if (-e $report){
 #
 my $homology_directory= $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/orthology/output_files/individual_gene_sentences/";
 my $go_directory= $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_gene_sentences/";
+my $homology_go_from_elegans_directory="";
+my @homology_go_from_elegans_files=();
+if ($species !~/elegans/){
+ $homology_go_from_elegans_directory= $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/orthology/output_files/individual_gene_sentences_from_GO_elegans/";
+ @homology_go_from_elegans_files= glob("$homology_go_from_elegans_directory/WBGene*");
+}
+
 #
 # if the output files for individual gene sentences exist delete them.
    my @individual_files = glob("$individual_path/WBGene*");
@@ -69,7 +85,7 @@ my @go_files  = glob("$go_directory/WBGene*");
 #
 # Create a list of genes
 #
-my @list = (@homology_files, @go_files);
+my @list = (@homology_files, @go_files, @homology_go_from_elegans_files);
 #
  my @unsorted_files = ();
  foreach my $item (@list){
@@ -90,7 +106,16 @@ foreach my $file (@sort_unique_list){
  write_file($summary, {append => 1 }, $file);
  write_file($summary, {append => 1 }, "\n");
 #
- my $homology_file  = $homology_directory  . $file;
+ my $homology_file;
+ my $homology_no_go_file  = $homology_directory  . $file;
+ my $homology_go_from_elegans_file  = $homology_go_from_elegans_directory  . $file;
+
+  if (-e $homology_go_from_elegans_file) {
+     $homology_file = $homology_go_from_elegans_file;
+      } else {
+     $homology_file = $homology_no_go_file;
+      }
+
  my $go_file  = $go_directory  . $file;
  my $homology ="";
  my $go ="";
@@ -125,6 +150,13 @@ if ($last=~/\;/){
 }
  
  my $outfile = $individual_path . $file;
+
+ if ($species =~/ratti/){
+  if ($output =~/SRAE/){
+   my $this_gene = "this gene";
+   $output =~s/SRAE\_\S+/$this_gene/g;
+  }
+ }
 
  if ($species !~/elegans/){ 
   write_file($outfile, ucfirst($output));

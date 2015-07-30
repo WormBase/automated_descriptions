@@ -10,14 +10,16 @@ my $RELEASE = ConciseDescriptions::get_release();
 my $html = ConciseDescriptions::get_html_dir();
 my $home = $html . "concise_descriptions/";
 my $go_elegans_dir = $home . "release/$PRODUCTION_RELEASE/c_elegans/gene_ontology/input_files/";
-my $gene_association_file = $go_elegans_dir . "gene_association.$RELEASE.wb.c_elegans";
+my $gene_association_file = $go_elegans_dir . "gene_association.wb";
 my $wbgene_gaf_elegans_array_ref = get_wbgene_gaf_array($gene_association_file);
 my @wbgene_gaf_elegans_array = @$wbgene_gaf_elegans_array_ref;
 my $gene_list_dir = $home . "release/$PRODUCTION_RELEASE/c_elegans/gene_lists/";
 my $curated_gene_list = $gene_list_dir . "sort.curated_genes.txt";
 my @curated_genes = read_file($curated_gene_list);
+my $dead_gene_list = $gene_list_dir . "sort.dead_genes.txt";
+my @dead_genes = read_file($dead_gene_list);
 my $elegans_orthology = $home . "release/$PRODUCTION_RELEASE/c_elegans/orthology/input_files/";
-my $gene_orthologs_file = $elegans_orthology . "c_elegans.PRJNA13758.$RELEASE.orthologs.txt";
+my $gene_orthologs_file = $elegans_orthology . "c_elegans.orthologs.txt";
 my $wbgene_ortholog_elegans_array_ref = get_wbgene_ortholog_array($gene_orthologs_file);
 my @wbgene_ortholog_elegans_array = @$wbgene_ortholog_elegans_array_ref;
 
@@ -47,10 +49,23 @@ foreach my $test (@sorted_unique_gene_array){
    push(@uncurated_genes_array, $test);
  }
 }
+#my @sorted_uncurated_genes_array = sort(@uncurated_genes_array);
+# subtract dead genes
+my @uncurated_live_genes_array = ();
+foreach my $test (@uncurated_genes_array){
+ my $keep =0;
+ foreach my $dead (@dead_genes){
+   if ($dead =~/$test/){
+    $keep = 1;
+   }
+ }
+ if ($keep ==0){
+   push(@uncurated_live_genes_array, $test);
+ }
+}
+my @sorted_uncurated_live_genes_array = sort(@uncurated_live_genes_array);
 # print remaining genes
-my @sorted_uncurated_genes_array = sort(@uncurated_genes_array);
-
-foreach my $element (@sorted_uncurated_genes_array){
+foreach my $element (@sorted_uncurated_live_genes_array){
         my $out = $element . "\n";
         write_file($output_file, {append => 1 }, $out);
 } 
