@@ -15,18 +15,7 @@ The software is available online:
 Output can be found here: http://textpresso-dev.caltech.edu/concise_descriptions/
 
 The perl module dependencies are:
- Carp, 
- DBI, 
- File::Slurp, 
- LWP::Simple,  
- LWP::UserAgent,  
- List::MoreUtils,   
- List::Util,  
- OBO::Parser::OBOParser,  
- POSIX, 
- Spreadsheet::XLSX,  
- Switch, 
- Text::CSV 
+ Carp, DBI, File::Slurp, LWP::Simple, LWP::UserAgent, List::MoreUtils, List::Util, OBO::Parser::OBOParser, POSIX, Spreadsheet::XLSX, Switch and Text::CSV 
 
 Enjoy !
 
