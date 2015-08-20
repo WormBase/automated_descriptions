@@ -12,6 +12,13 @@ The standard operation procedures for the software is itemized online:
 The software is available online: 
 	https://github.com/WormBase/automated_descriptions
 
+Output can be found here: http://textpresso-dev.caltech.edu/concise_descriptions/
+
+The perl module dependencies are:
+ Carp, DBI, File::Slurp, LWP::Simple, LWP::UserAgent, List::MoreUtils, List::Util, OBO::Parser::OBOParser, POSIX, Spreadsheet::XLSX, Switch and Text::CSV 
+
+GNU Parallel, https://www.gnu.org/software/parallel/, is required as well.
+
 Enjoy !
 
 R. Kishore and J. Done, California Institute of Technology, 2016
