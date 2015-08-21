@@ -17,7 +17,9 @@ Output can be found here: http://textpresso-dev.caltech.edu/concise_descriptions
 The perl module dependencies are:
  Carp, DBI, File::Slurp, LWP::Simple, LWP::UserAgent, List::MoreUtils, List::Util, OBO::Parser::OBOParser, POSIX, Spreadsheet::XLSX, Switch and Text::CSV 
 
-GNU Parallel, https://www.gnu.org/software/parallel/, is required as well.
+Perl 5.8.x (or higher) and R 3.x are used on Ubuntu and Red Hat Enterprise Linux platforms. 
+
+GNU Parallel 20130922 (or higher), https://www.gnu.org/software/parallel/, is required as well.
 
 Enjoy !
 
