@@ -4,7 +4,7 @@ p <- function(..., sep='') {
     paste(..., sep=sep, collapse=sep)
 }
 
-pdf("textpresso_gene_popularity.pdf")
+pdf("./textpresso_gene_popularity.pdf")
 
 args<-commandArgs(TRUE)
 
