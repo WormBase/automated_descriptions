@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 use ConciseDescriptions;
 use LWP::Simple;
 use List::MoreUtils qw(uniq);
