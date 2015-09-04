@@ -16,8 +16,10 @@ if (-e $output_file) {
  my @args = ("/bin/rm", "-f", $output_file);
  my $status = system(@args);
  }
-my $host = 'caltech.wormbase.org';
-my $port = 2005;
+my $host = read_file("./acedb_host.txt");
+chomp($host);
+my $port = read_file("./acedb_port.txt");
+chomp($port);
 my $db = Ace->connect( -host => $host, -port => $port )
         or die "Can't connect to '$host' on port '$port' : ", Ace->error;
 
@@ -36,9 +38,13 @@ foreach my $obj (@objects){
  my @out_obj = @{$obj};
  while (my ($el1, $el2) = splice(@out_obj, 0, 2)) {
 # In this example, 
-   my $item = "$el1\t$el2\n";
+        $el1 =~s/^\s+//;
+        $el1 =~s/\s+$//;
+        $el2 =~s/^\s+//;
+        $el2 =~s/\s+$//;
+        my $item = "$el1\t$el2\n";
 #   print "$item";
-   write_file($output_file, {append => 1}, $item);
+        write_file($output_file, {append => 1}, $item);
  }
 }
 $db->close();
