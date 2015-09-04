@@ -18,8 +18,12 @@ if (-e $output_file) {
  }
 my $host = read_file("./acedb_host.txt");
 chomp($host);
+$host =~s/^\s+//;
+$host =~s/\s+$//;
 my $port = read_file("./acedb_port.txt");
 chomp($port);
+$port =~s/^\s+//;
+$port =~s/\s+$//;
 my $db = Ace->connect( -host => $host, -port => $port )
         or die "Can't connect to '$host' on port '$port' : ", Ace->error;
 
