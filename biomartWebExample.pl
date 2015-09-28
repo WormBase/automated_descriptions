@@ -10,7 +10,6 @@ my $html = ConciseDescriptions::get_html_dir();
 my $PRODUCTION_RELEASE = ConciseDescriptions::get_production_release();
 my $RELEASE = ConciseDescriptions::get_release();
 #
-my $outpath = $html . "concise_descriptions/semantic_categories/homology/";
 my $species = "c_elegans";
 my $outpath  = $html . "concise_descriptions/release/$PRODUCTION_RELEASE/$species/orthology/input_files/";
 
