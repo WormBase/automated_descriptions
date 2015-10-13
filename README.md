@@ -6,7 +6,7 @@ automated concise descriptions
 The requirements for automated concise descriptions are outlined online:
 	http://wiki.wormbase.org/index.php/Generation_of_automated_descriptions
 
-The standard operation procedures for the software is itemized online:
+The standard operation procedure for the software is itemized online:
 	http://wiki.wormbase.org/index.php/Documentation_for_workflow_and_scripts
 
 The software is available online: 
