@@ -47,6 +47,7 @@ my $description_directory= $path . "individual_gene_descriptions/";
 my $orthology = $home . "release/$PRODUCTION_RELEASE/$species/orthology/";
 my $elegans_orthology = $home . "release/$PRODUCTION_RELEASE/c_elegans/orthology/";
 my $go_home = $home . "release/$PRODUCTION_RELEASE/$species/gene_ontology/";
+my $tissue_home = $home . "release/$PRODUCTION_RELEASE/$species/tissue_expression/";
 my $summary = $path . "OA_concise_descriptions.$PRODUCTION_RELEASE.txt";
 my $number_file = $path . "OA_concise_descriptions.number_of_genes.$PRODUCTION_RELEASE.txt";
 # Create advertising string
@@ -80,8 +81,12 @@ my %gene_ensg_hash= %{$gene_ensg_hash_ref};
 my %gene_hgnc_hash= %{$gene_hgnc_hash_ref};
 
 my $gene_association_file = "";
+my @tissue_gene_association_lines = ();
+my $tissue_gene_association_file = "";
 if ($species=~/elegans/){
     $gene_association_file = $go_home . "input_files/gene_association.wb";
+    $tissue_gene_association_file = $tissue_home . "input_files/anatomy_association.$RELEASE.wb";
+    @tissue_gene_association_lines = read_file($tissue_gene_association_file);
 } else{
     $gene_association_file = $go_home . "input_files/gene_association.$RELEASE.wb.$species";
 }
@@ -153,6 +158,38 @@ if ($species=~/elegans/){
           $accession{$gene_id} = $with;
       }
       }
+      if ($reference{$gene_id} ne ""){
+        if ($reference{$gene_id} !~ m/$ref/){
+          $reference{$gene_id} .= "\|" . $ref;
+        }
+      } else {
+          $reference{$gene_id} = $ref;
+      }
+} # end foreach @gene_association_lines
+
+    foreach my $line (@tissue_gene_association_lines) {
+      my $gene = $line;
+      chomp($gene);
+      next if ($gene =~ m/\!/);
+      
+      my @gene_array = split(/\t/,$gene);
+      
+      my $gene_id = $gene_array[1];
+      my $gene_name = $gene_array[2];
+      my $ref = $gene_array[5];
+
+      chomp($gene_id);
+      chomp($gene_name);
+      chomp($ref);
+
+     $ref =~s/^\s+//;
+     $ref =~s/\s+$//;
+     $ref =~s/\t+$//;
+     $ref =~s/^\t+//;
+
+     $ref =~ s/GO_REF:0000002/WBPaper00045688|WBPaper00045689/g; 
+     $ref =~s/WB\_REF\://g;
+
       if ($reference{$gene_id} ne ""){
         if ($reference{$gene_id} !~ m/$ref/){
           $reference{$gene_id} .= "\|" . $ref;

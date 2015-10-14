@@ -465,6 +465,8 @@ foreach my $gene_id (@sorted_uncurated_genes_array){
       
        my $out = $individual_path . $gene_id;
         write_file($out, $sentence);
+        write_file($output_file, {append => 1 }, $gene_id);
+        write_file($output_file, {append => 1 }, "\n");
         write_file($output_file, {append => 1 }, $sentence);
         write_file($output_file, {append => 1 }, "\n\n\n");
        }
