@@ -50,12 +50,15 @@ foreach my $species (@species_array){
  my $individual_gene_descriptions_directory = "$home/release/$PRODUCTION_RELEASE/$species/descriptions/individual_gene_descriptions/";
  my $orthology_directory ="$home/release/$PRODUCTION_RELEASE/$species/orthology/output_files/individual_gene_sentences/";
  my $GO_directory ="$home/release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_gene_sentences/";
-
+ my $tissue_directory = "$home/release/$PRODUCTION_RELEASE/$species/tissue_expression/output_files/individual_gene_sentences/";
  if (-e $individual_gene_descriptions_directory ) {
      my @descriptions = read_dir( $individual_gene_descriptions_directory, prefix => 1 );
      my @GO = read_dir($GO_directory, prefix => 1 );
      my @orthology = read_dir($orthology_directory, prefix => 1 );
-     
+     my @tissue=();
+     if (-e $tissue_directory){
+        @tissue = read_dir($tissue_directory, prefix => 1);
+     }
      my $manual_count = 0;
      foreach my $d (@descriptions) {
 #       if (grep {$_ =~/$d/} @manual){
@@ -74,7 +77,7 @@ foreach my $species (@species_array){
 
      my $orthology_count = @orthology;
      my $go_count = @GO;
-
+     my $tissue_count = @tissue;
      my $count = @descriptions;
      my $name = $species_name_hash{$species};
         $name    =~s/\_/ /g;
@@ -82,6 +85,7 @@ foreach my $species (@species_array){
      my $commify_count = commify($count);
      my $commify_orthology_count = commify($orthology_count);
      my $commify_go_count = commify($go_count);
+     my $commify_tissue_count = commify($tissue_count);
      write_file($summary, {append => 1 }, $name_list);
      my $text = "$commify_count individual gene descriptions\n";
      write_file($summary, {append => 1 }, $text);
@@ -98,6 +102,8 @@ foreach my $species (@species_array){
      write_file($summary, {append => 1 }, $orthology_text);
      my $go_text = "$commify_go_count gene ontology sentences\n";
      write_file($summary, {append => 1 }, $go_text);
+     my $tissue_text = "$commify_tissue_count tissue expression sentences\n";
+     write_file($summary, {append => 1 }, $tissue_text);
      write_file($summary, {append => 1 }, $single_breakln);
 
      $kount += $count;

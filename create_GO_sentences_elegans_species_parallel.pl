@@ -37,6 +37,10 @@ my $html = ConciseDescriptions::get_html_dir();
 my $home_elegans = $html . "concise_descriptions/release/$PRODUCTION_RELEASE/c_elegans/";
 my $home = $html . "concise_descriptions/release/$PRODUCTION_RELEASE/$species/";
 my $gene_list_dir = $home_elegans . "gene_lists/";
+
+my $gene_class_file = $gene_list_dir . "acedb_gene_class.txt";
+my $gene_class_hash_ref = ConciseDescriptions::get_gene_class_hash($gene_class_file);
+my %gene_class_hash = %{$gene_class_hash_ref};
 my $db_gene_list  = $gene_list_dir . "wb_gene_list.txt";
 if (-e $db_gene_list){
  print "dp gene list is $db_gene_list\n";
@@ -76,6 +80,7 @@ my ($gene_elegans_id_hash_ref, $gene_elegans_hash_ref) = get_id_name_hash($ortho
 my %gene_elegans_hash= %{$gene_elegans_hash_ref};
 my %gene_elegans_id_hash= %{$gene_elegans_id_hash_ref};
 #
+my $in_c_elegans = " in C\. elegans\, ";
 my $doublecomma = "\,\,";
 my $the_the = "the the";
 my $the = "the";
@@ -205,13 +210,22 @@ foreach my $gene_id (@sorted_uncurated_live_genes_array){
 #
   my $elegans_list = "";
   my @elegans_array = ();
+  my @initial_elegans_array = ();
   if ($gene_elegans_id_hash{$gene_id}){
       $elegans_list = $gene_elegans_id_hash{$gene_id};
    if ($elegans_list =~/$AND/){
-      @elegans_array = uniq(split(/$AND/, $elegans_list));
+      @initial_elegans_array = uniq(split(/$AND/, $elegans_list));
     } else {
-     $elegans_array[0] = $elegans_list;
+     $initial_elegans_array[0] = $elegans_list;
    }
+  }
+  foreach my $i (@initial_elegans_array){
+   chomp($i);
+       $i =~ s/^\s+//;
+       $i =~ s/\s+$//;
+   if ($gene_class_hash{$i}){
+    push(@elegans_array, $i);
+   } 
   }
   @elegans_array = uniq(sort(@elegans_array));
   my $number_of_orthologs = @elegans_array;  
@@ -238,18 +252,19 @@ foreach my $gene_id (@sorted_uncurated_live_genes_array){
   }
   my $ortholog_sentence = "";
   if ($ortholog_list){
-      $ortholog_sentence = $gene_name . $is_a_ce . $ortholog_list;
+      $ortholog_sentence = $in_c_elegans . $ortholog_list;
   }
   my $helper_verb = "";
   if ($number_of_orthologs < 2) {
-      $helper_verb = "\, which is involved in ";
+      $helper_verb = "\, is involved in ";
   }
   if ($number_of_orthologs >= 2) {
-      $helper_verb = "\, which are involved in ";
+      $helper_verb = "\, are involved in ";
   }
 #
 my %elegans_process_elements_hash=();
 foreach my $element_id (@elegans_array){
+ if ($gene_class_hash{$element_id}){
   my @gene_process_array=();
   my $gene_process = $elegans_process_hash{$element_id};
   if ($gene_process){
@@ -258,6 +273,7 @@ foreach my $element_id (@elegans_array){
 
    my @uniq_gene_process_array=uniq(sort(@gene_process_array));
    $elegans_process_elements_hash{$element_id} = \@uniq_gene_process_array;
+ }
 }
 #
 my $process_intersection_array_ref = array_common_elements(\%elegans_process_elements_hash);
@@ -373,6 +389,8 @@ my $gene_process = join(',', @uniq_process_intersection_array);
           $gene_sentence =~s/$doublespace/$space/g;
           $gene_sentence =~s/$space_comma/$just_comma/g;
         write_file($out, $gene_sentence);
+        write_file($output_file, {append => 1 }, $gene_id);
+        write_file($output_file, {append => 1 }, "\n");
         write_file($output_file, {append => 1 }, $gene_sentence);
         write_file($output_file, {append => 1 }, "\n\n\n");
        }

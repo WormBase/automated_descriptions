@@ -47,7 +47,7 @@ my $wormbase_gene_id_name_file = $elegans_gene_list_dir . "wormbase_gene_id_name
 my $wormbase_gene_id_name_hash_ref = get_wbgene_name_hash($wormbase_gene_id_name_file);
 
 my $gene_class_file = $elegans_gene_list_dir . "acedb_gene_class.txt";
-my $gene_class_hash_ref = get_gene_class_hash($gene_class_file);
+my $gene_class_hash_ref = ConciseDescriptions::get_gene_class_hash($gene_class_file);
 
 my $sapiens_orthology = $orthology . "input_files/orthologs.$name.H_Sapiens.txt";
 my $orthology_elegans = $orthology_elegans_dir . "input_files/c_elegans.orthologs.txt";
@@ -193,8 +193,10 @@ if (($elegans_phrase) and ($elegans_size < 6)) {
 }
 
 if ($sentence) {
+      write_file($output_file, {append => 1 }, $gene_id);      
+      write_file($output_file, {append => 1 }, "\n");
       write_file($output_file, {append => 1 }, $sentence);
-      write_file($output_file, {append => 1 }, "\n\n");
+      write_file($output_file, {append => 1 }, "\n\n\n");
       write_file($out, $sentence);
 } 
  
@@ -485,26 +487,26 @@ my ($wbgene_id, $name) = split(/\t/, $line);
 return \%hash;
 }
 
-sub get_gene_class_hash{
-my $file = shift;
-my %hash=();
-
-my @lines = read_file($file);
-foreach my $line (@lines){
-chomp($line);
-$line =~s/\"//g;
-my ($family, $wbgene_id) = split(/\t/, $line);
- if (($family) and ($wbgene_id)){
-      $family    =~s/^\s+//;
-      $family    =~s/\s+$//;
-      $wbgene_id =~s/^\s+//;
-      $wbgene_id =~s/\s+$//;
-   $hash{$wbgene_id} = $family;
- }
-}
-
-return \%hash;
-}
+#sub get_gene_class_hash{
+#my $file = shift;
+#my %hash=();
+#
+#my @lines = read_file($file);
+#foreach my $line (@lines){
+#chomp($line);
+#$line =~s/\"//g;
+#my ($family, $wbgene_id) = split(/\t/, $line);
+# if (($family) and ($wbgene_id)){
+#      $family    =~s/^\s+//;
+#      $family    =~s/\s+$//;
+#      $wbgene_id =~s/^\s+//;
+#      $wbgene_id =~s/\s+$//;
+#   $hash{$wbgene_id} = $family;
+# }
+#}
+#
+#return \%hash;
+#}
 
 sub by_popularity{
 my $hash_ref=shift;

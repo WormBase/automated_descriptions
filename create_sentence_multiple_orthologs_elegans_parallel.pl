@@ -160,8 +160,10 @@ foreach my $gene_id (@sorted_uncurated_genes_array){
      
       $sentence  = $gene_name . $is_a . $ensg_phrase;
       $sentence .= "\;\n";
+      write_file($output_file, {append => 1 }, $gene_id);
+      write_file($output_file, {append => 1 }, "\n");
       write_file($output_file, {append => 1 }, $sentence);
-      write_file($output_file, {append => 1 }, "\n\n");
+      write_file($output_file, {append => 1 }, "\n\n\n");
       write_file($out, $sentence);
  }
  
