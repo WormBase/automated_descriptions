@@ -190,7 +190,11 @@ if ($species=~/elegans/){
      $ref =~ s/GO_REF:0000002/WBPaper00045688|WBPaper00045689/g; 
      $ref =~s/WB\_REF\://g;
 
+<<<<<<< HEAD
       if (exists $reference{$gene_id}){
+=======
+      if ($reference{$gene_id} ne ""){
+>>>>>>> b8516fd33e3bbe9e4fd676bcfd68cf86d33ceb53
         if ($reference{$gene_id} !~ m/$ref/){
           $reference{$gene_id} .= "\|" . $ref;
         }
