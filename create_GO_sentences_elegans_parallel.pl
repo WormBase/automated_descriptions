@@ -59,7 +59,9 @@ my $go_elegans_dir = $home . "gene_ontology/input_files/";
 my $gene_association_elegans_file = $go_elegans_dir . "gene_association.wb";
 my $elegans_orthology = $home . "orthology/";
 my $go_path = $home . "gene_ontology/output_files/";
-my $output_file = $go_path . "sentences_for_GO.txt";
+my $output_process_file   = $go_path . "sentences_for_process.txt";
+my $output_function_file  = $go_path . "sentences_for_function.txt";
+my $output_component_file = $go_path . "sentences_for_component.txt";
 #
 my $wbgene_elegans_name_hash_ref = get_wbgene_name_elegans_hash($gene_association_elegans_file, $db_gene_list);
 my %wbgene_elegans_name_hash = %$wbgene_elegans_name_hash_ref;
@@ -100,8 +102,8 @@ my $molting_2 = "molting cycle\, collagen and cuticulin\-based cuticle";
 my $molting_3 = "molting cycle\, protein\-based cuticle";
 my $molting_0 = "molting cycle";
 
-my $the_cell_0 = "localized to the cell";
-my $the_cell_1 = "expressed widely";
+my $the_cell_0 = "localized to the cell\;";
+my $the_cell_1 = "expressed widely\;";
 
 my $embryo   = "embryo development";
 my $embryo_1 = "embryo development ending in birth or egg hatching";
@@ -114,20 +116,54 @@ if (-e $go_path){
 } else {
    mkdir $go_path or die "could not create $go_path";
 }
-my $individual_path = $go_path . "individual_gene_sentences/";
-if (-e $individual_path){
-   my $individual_path_flag = 1;
+my $individual_process_path = $go_path . "individual_process_sentences/";
+if (-e $individual_process_path){
+   my $individual_process_path_flag = 1;
 } else {
-   mkdir $individual_path or die "could not create $individual_path";
+   mkdir $individual_process_path or die "could not create $individual_process_path";
+}
+my $individual_component_path = $go_path . "individual_component_sentences/";
+if (-e $individual_component_path){
+   my $individual_component_path_flag = 1;
+} else {
+   mkdir $individual_component_path or die "could not create $individual_component_path";
+}
+my $individual_function_path = $go_path . "individual_function_sentences/";
+if (-e $individual_function_path){
+   my $individual_function_path_flag = 1;
+} else {
+   mkdir $individual_function_path or die "could not create $individual_function_path";
 }
 # if the output file exists delete it.
-if (-e $output_file){
-   my @args = ("/bin/rm", "-f", $output_file);
-   system(@args) == 0 or die("could not delete file $output_file\n");
+if (-e $output_function_file){
+   my @args = ("/bin/rm", "-f", $output_function_file);
+   system(@args) == 0 or die("could not delete file $output_function_file\n");
+}
+# if the output file exists delete it.
+if (-e $output_component_file){
+   my @args = ("/bin/rm", "-f", $output_component_file);
+   system(@args) == 0 or die("could not delete file $output_component_file\n");
+}
+# if the output file exists delete it.
+if (-e $output_process_file){
+   my @args = ("/bin/rm", "-f", $output_process_file);
+   system(@args) == 0 or die("could not delete file $output_process_file\n");
 }
 # if the output files for individual gene sentences exist delete them.
-   my @individual_files = glob("$individual_path/WBGene*");
-      foreach my $individual (@individual_files){
+   my @individual_process_files = glob("$individual_process_path/WBGene*");
+      foreach my $individual (@individual_process_files){
+      my @args = ("/bin/rm", "$individual");
+      system(@args) == 0 or die("could not delete $individual\n");
+   }
+# if the output files for individual gene sentences exist delete them.
+   my @individual_component_files = glob("$individual_component_path/WBGene*");
+      foreach my $individual (@individual_component_files){
+      my @args = ("/bin/rm", "$individual");
+      system(@args) == 0 or die("could not delete $individual\n");
+   }
+# if the output files for individual gene sentences exist delete them.
+   my @individual_function_files = glob("$individual_function_path/WBGene*");
+      foreach my $individual (@individual_function_files){
       my @args = ("/bin/rm", "$individual");
       system(@args) == 0 or die("could not delete $individual\n");
    }
@@ -369,7 +405,24 @@ foreach my $gene_id (@sorted_uncurated_genes_array){
       $function_string =~ s/ +/ /g;
 
 } # if gene function string
- my $gene_component = $elegans_component_hash{$gene_id};
+ my $gene_component = "";
+ my @gene_component_results = ();
+ my $gene_component_result = $elegans_component_hash{$gene_id};
+ if ($gene_component){
+    @gene_component_results = split(/\,/, $gene_component_result);
+ }
+ my @unique_component_results = uniq(@gene_component_results);
+ if (@unique_component_results > 1){
+  my @c=();
+  foreach my $c (@unique_component_results){
+   if ($c !~/GO\:0005623/){ 
+     push(@c, $c);
+   }
+  }
+   $gene_component = join(",",@c);
+ } else {
+   $gene_component = $gene_component_result;
+ }
  if ($gene_component){
    my @evidences=("EXP","IMP","IGI","IPI","IDA","IEP","IEA","ISS","ISA","ISO","ISM","IGC","IBA","IBD","IKR","IRD","RCA","TAS","NAS","ND","IC");
   my $gene_row = $gene_id . "\," . $gene_name . "\," . $gene_component;
@@ -401,7 +454,7 @@ foreach my $gene_id (@sorted_uncurated_genes_array){
  my $adj_sentence;
  my $adj_count = @new_component_adjectives; 
 
- if ($adj_count gt 0){
+ if ($adj_count > 0){
    my $count = 0;
    $adj_sentence = $adj_phrase;
 
@@ -494,47 +547,86 @@ my @evidences=("EXP","IMP","IGI","IPI","IDA","IEP","IEA","ISS","ISA","ISO","ISM"
       }
    } # if components array
  }
-  my $sentence = "";
-
-  if ((@GO_components) and (@GO_processes) and (@GO_functions)){
-    $sentence = $gene_name . " " . $process_string . "\; " . $gene_name . " " . $function_string . "\; " . $gene_name . " " . $component_string;
-  } elsif ((@GO_processes) and (@GO_functions)){
-    $sentence = $gene_name . " " . $process_string . "\; " . $gene_name . " " . $function_string;
-  } elsif ((@GO_components) and (@GO_functions)){
-    $sentence = $gene_name . " " . $function_string . "\; " . $gene_name . " " . $component_string;
-  } elsif ((@GO_components) and (@GO_processes)){
-    $sentence = $gene_name . " " . $process_string . "\; " . $gene_name . " " . $component_string;
-  } elsif (@GO_components){
-    $sentence = $gene_name . " " . $component_string;
-  } elsif (@GO_processes){
-    $sentence = $gene_name . " " . $process_string;
-  } elsif (@GO_functions){
-    $sentence = $gene_name . " " . $function_string;
-  } else {
-    $sentence = "";
-  }
+#  my $sentence = "";
+#
+#  if ((@GO_components) and (@GO_processes) and (@GO_functions)){
+#    $sentence = $gene_name . " " . $process_string . "\; " . $gene_name . " " . $function_string . "\; " . $gene_name . " " . $component_string;
+#  } elsif ((@GO_processes) and (@GO_functions)){
+#    $sentence = $gene_name . " " . $process_string . "\; " . $gene_name . " " . $function_string;
+#  } elsif ((@GO_components) and (@GO_functions)){
+#    $sentence = $gene_name . " " . $function_string . "\; " . $gene_name . " " . $component_string;
+#  } elsif ((@GO_components) and (@GO_processes)){
+#    $sentence = $gene_name . " " . $process_string . "\; " . $gene_name . " " . $component_string;
+#  } elsif (@GO_components){
+#    $sentence = $gene_name . " " . $component_string;
+#  } elsif (@GO_processes){
+#    $sentence = $gene_name . " " . $process_string;
+#  } elsif (@GO_functions){
+#    $sentence = $gene_name . " " . $function_string;
+#  } else {
+#    $sentence = "";
+#  }
   if (($process_string) or ($function_string) or ($component_string)){
           my $doublespace = "  ";
           my $space = " ";
-          $sentence =~s/$growth_0/$growth_1/g;
-          $sentence =~s/$the_cell_0/$the_cell_1/g;
-          $sentence =~s/$structural/$is_structural/g;
+# 
+          $component_string =~s/$growth_0/$growth_1/g;
+          $component_string =~s/$structural/$is_structural/g;
+          $function_string =~s/$growth_0/$growth_1/g;
+          $function_string =~s/$structural/$is_structural/g;
+          $process_string =~s/$growth_0/$growth_1/g;
+          $process_string =~s/$structural/$is_structural/g;
 # remove redundant is
-          $sentence =~s/$is_is/$is/g;
-          $sentence =~s/$is_a_is_a/$is_a/g;
-
+          $function_string  =~s/$is_is/$is/g;
+          $function_string  =~s/$is_a_is_a/$is_a/g;
+          $process_string   =~s/$is_is/$is/g;
+          $process_string   =~s/$is_a_is_a/$is_a/g;
+          $component_string =~s/$is_is/$is/g;
+          $component_string =~s/$is_a_is_a/$is_a/g;
 # remove any double spaces
-          $sentence =~s/$doublespace/$space/g;
+          $component_string =~s/$doublespace/$space/g;
+          $function_string  =~s/$doublespace/$space/g;
+          $process_string   =~s/$doublespace/$space/g;
 # add semi-colon at end
-      if (length($sentence) > 0){
-              $sentence .= "\.";
-       my $out = $individual_path . $gene_id;
+      if (length($process_string) > 0){
+          $process_string .= "\;";
+        my $out = $individual_process_path . $gene_id;
+        my $sentence = $gene_name . " " . $process_string;
+           $sentence =~s/$doublespace/$space/g;
         write_file($out, $sentence);
-        write_file($output_file, {append => 1 }, $gene_id);
-        write_file($output_file, {append => 1 }, "\n");
-        write_file($output_file, {append => 1 }, $sentence);
-        write_file($output_file, {append => 1 }, "\n\n\n");
-       } # if length of sentence
+        write_file($output_process_file, {append => 1 }, $gene_id);
+        write_file($output_process_file, {append => 1 }, "\n");
+        write_file($output_process_file, {append => 1 }, $sentence);
+        write_file($output_process_file, {append => 1 }, "\n\n\n");
+         }
+      if (length($component_string) > 0){
+          $component_string .= "\;";
+          if ($component_string=~/$the_cell_0/){
+              my $location = index ( $component_string, $the_cell_0 );
+              if ($location != -1){
+                $component_string =~s/$the_cell_0/$the_cell_1/g;
+              }
+          }
+        my $out = $individual_component_path . $gene_id;
+        my $sentence = $gene_name . " " . $component_string;
+           $sentence =~s/$doublespace/$space/g;
+        write_file($out, $sentence);
+        write_file($output_component_file, {append => 1 }, $gene_id);
+        write_file($output_component_file, {append => 1 }, "\n");
+        write_file($output_component_file, {append => 1 }, $sentence);
+        write_file($output_component_file, {append => 1 }, "\n\n\n");
+         }
+      if (length($function_string) > 0){
+          $function_string .= "\;";
+        my $sentence = $gene_name . " " . $function_string;
+        my $out = $individual_function_path . $gene_id;
+           $sentence =~s/$doublespace/$space/g;
+        write_file($out, $sentence);
+        write_file($output_function_file, {append => 1 }, $gene_id);
+        write_file($output_function_file, {append => 1 }, "\n");
+        write_file($output_function_file, {append => 1 }, $sentence);
+        write_file($output_function_file, {append => 1 }, "\n\n\n");
+         }
   }
  }
 } # if elegans
@@ -1014,7 +1106,7 @@ sub get_verb_component_goterm{
            }
          if ($count == 0) {
              $verb_goterm = $helper_string . $goterm;
-         } elsif ($count lt  @goterms-1) {
+         } elsif ($count <  @goterms-1) {
 
             if ($verb_goterm =~/$helper_string/){
              $verb_goterm .= "\, the ";
@@ -1123,7 +1215,7 @@ sub get_function_string {
           next if ($function =~/GO\:0005488/); # ignore binding
           next if ($function =~/GO\:0005515/); # ignore protein binding
           $function_count++;
-          if ($function_count gt 0){
+          if ($function_count > 0){
           my ($evidence) = $function =~ /\[(.*)\]/;
              if ($evidence) {
                  $function =~ s/\[$evidence\]//g;

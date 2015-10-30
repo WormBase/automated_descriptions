@@ -128,8 +128,8 @@ my $embryo_1 = "embryo development ending in birth or egg hatching";
 my $growth_0 = "multicellular organism growth";
 my $growth_1 = "growth";
 
-my $the_cell_0 = "localized to the cell";
-my $the_cell_1 = "expressed widely";
+my $the_cell_0 = "localized to the cell\;";
+my $the_cell_1 = "expressed widely\;";
 #
 if (-e $go_path){
    my $go_path_flag = 1;
@@ -378,12 +378,12 @@ my $gene_process = join(',', @uniq_process_intersection_array);
           $sentence =~s/$is_a_is_a/$is_a/g;
 # remove any double spaces
           $sentence =~s/$doublespace/$space/g;
-          $sentence =~s/$the_cell_0/$the_cell_1/g;
           $sentence =~s/$growth_0/$growth_1/g;
 # add semi-colon at end
 #          $sentence .= "\;";
       if (length($sentence) > 0){
-              $sentence .= "\;";
+          $sentence .= "\;";
+          $sentence =~s/$the_cell_0/$the_cell_1/g;
        my $out = $individual_path . $gene_id;
        my $gene_sentence = $ortholog_sentence . " " . $sentence;
           $gene_sentence =~s/$doublespace/$space/g;

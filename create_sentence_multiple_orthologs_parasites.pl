@@ -650,7 +650,7 @@ sub get_id_name_hash{
          my $single_size = @single_source_array;
          my $multiple_size = @multiple_source_array;
 
-         if ($multiple_size gt 0){
+         if ($multiple_size > 0){
              foreach my $a_line (@multiple_source_array){
                chomp($a_line);
                my ($a_wb_gene_id, $a_gene_species_name, $a_id, $a_name, $a_source) = split(/\t/, $a_line);
@@ -671,7 +671,7 @@ sub get_id_name_hash{
                    $gene_id_hash{$a_wb_gene_id} = $a_id;
                }
             }
-          } elsif ($single_size gt 0) {
+          } elsif ($single_size > 0) {
              foreach my $a_line (@single_source_array){
                chomp($a_line);
                my ($a_wb_gene_id, $a_gene_species_name, $a_id, $a_name, $a_source) = split(/\t/, $a_line);

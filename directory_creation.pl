@@ -25,7 +25,9 @@ my $gene_lists_directory = $species_directory . "gene\_lists\/";
 my $GO_directory = $species_directory . "gene\_ontology\/";
 my $GO_input_directory = $species_directory . "gene\_ontology\/input\_files\/";
 my $GO_output_directory = $species_directory . "gene\_ontology\/output\_files\/";
-my $GO_individual_output_directory = $species_directory . "gene\_ontology\/output\_files\/individual\_gene\_sentences\/";
+my $GO_process_output_directory = $species_directory . "gene\_ontology\/output\_files\/individual\_process\_sentences\/";
+my $GO_function_output_directory = $species_directory . "gene\_ontology\/output\_files\/individual\_function\_sentences\/";
+my $GO_component_output_directory = $species_directory . "gene\_ontology\/output\_files\/individual\_component\_sentences\/";
 #
 my $orthology_directory = $species_directory . "orthology\/";
 my $orthology_input_directory = $species_directory  . "orthology\/input\_files\/";
@@ -47,7 +49,9 @@ if (($species) and ($release)) {
  make_dir($GO_directory);
  make_dir($GO_input_directory);
  make_dir($GO_output_directory);
- make_dir($GO_individual_output_directory);
+ make_dir($GO_process_output_directory);
+ make_dir($GO_function_output_directory);
+ make_dir($GO_component_output_directory);
  make_dir($orthology_directory);
  make_dir($orthology_input_directory);
  make_dir($orthology_output_directory);

@@ -15,7 +15,7 @@ The software is available online:
 Output can be found here: http://textpresso-dev.caltech.edu/concise_descriptions/
 
 The perl module dependencies are:
- AcePerl, Carp, DBI, Devel::Graph, File::Slurp, Graph::Easy, LWP::Simple, LWP::UserAgent, List::MoreUtils, List::Util, OBO::Parser::OBOParser, POSIX, Spreadsheet::XLSX, Switch and Text::CSV 
+ AcePerl, Carp, DBI, Devel::Graph, Excel::Writer::XLSX, File::Slurp, Graph::Easy, LWP::Simple, LWP::UserAgent, List::MoreUtils, List::Util, OBO::Parser::OBOParser, POSIX, Spreadsheet::XLSX, Switch and Text::CSV 
 
 Perl 5.8.x (or higher) and R 3.x are used on Ubuntu and Red Hat Enterprise Linux platforms. 
 

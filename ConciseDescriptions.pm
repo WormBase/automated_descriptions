@@ -10,7 +10,7 @@ use strict;
 use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(get_production_release get_release get_html_dir get_cgi_dir get_db_ip getwebpage get_granular_array get_parents get_ontology_term get_array get_ontology_hash get_ontology_parents_children get_species_ensp_hash get_gene_protein_hash);
+our @EXPORT = qw(get_production_release get_release get_html_dir get_cgi_dir get_db_ip getwebpage get_granular_array get_parents get_ontology_term get_array get_ontology_hash get_ontology_parents_children get_ontology_instance get_species_ensp_hash get_gene_protein_hash get_gene_class_hash);
 #
 # This script is used to support automated concise descriptions for wormbase:
 # http://wiki.wormbase.org/index.php/Generation_of_automated_descriptions 
@@ -80,6 +80,7 @@ sub getwebpage{
     use LWP::UserAgent;
 	
     my $ua = LWP::UserAgent->new(timeout => 60); # instantiates a new user agent
+       $ua->agent('Mozilla/5.0');
     my $request = HTTP::Request->new(GET => $u); # grabs url
     my $response = $ua->request($request);       # checks url, dies if not valid.
     if ($response->is_success) {
@@ -241,6 +242,49 @@ if ($ontology){
  return (\%parents, \%children);
 
 }
+sub get_ontology_instance {
+my $input_file = shift;
+my $ontology = shift;
+my %instance=();
+
+if ($ontology){
+ if (-e $input_file){
+  my $ace_file = read_file($input_file);
+  my (@terms) = split/$ontology\_term\:/, $ace_file;
+  foreach my $term (@terms){
+  
+  my $wb="";
+  my $definition="";
+  $term =~ s/^\s+//;
+  $term =~ s/\s+$//;
+  if ($term =~ m/^\"$ontology\:(.*)/) {
+      $wb = $1; 
+      $wb=~s/^\s+//; 
+      $wb=~s/\s+$//; 
+      $wb=~s/\"//g;
+      chomp($wb); 
+      $definition = "$ontology\:" . $wb;
+  }
+           
+  my (@lines) = split/\n/, $term;
+  foreach my $line (@lines) {
+   if ($line =~/Instance\_of\t(.*)/){
+      my $instance_of = $1; 
+      $instance_of=~s/^\s+//; 
+      $instance_of=~s/\s+$//; 
+      $instance_of=~s/\"//g;
+      chomp($instance_of);   
+      if ($definition){
+          $instance{$definition} .= $instance_of . "\,"; 
+      }   
+    }
+   }
+  } # foreach term
+ }
+}
+ return \%instance;
+
+}
 #
 # get_array requires an $ontology_code (e.g., "GO"), reference to the array that must be filled or augmented
 #            an input file (parsed gene association file), optional evidence exclusions and 
@@ -375,4 +419,24 @@ sub get_gene_protein_hash{
          }
  }
  return \%gene_protein_hash;
+}
+sub get_gene_class_hash{
+my $file = shift;
+my %hash=();
+
+my @lines = read_file($file);
+foreach my $line (@lines){
+chomp($line);
+$line =~s/\"//g;
+my ($family, $wbgene_id) = split(/\t/, $line);
+ if (($family) and ($wbgene_id)){
+      $family    =~s/^\s+//;
+      $family    =~s/\s+$//;
+      $wbgene_id =~s/^\s+//;
+      $wbgene_id =~s/\s+$//;
+   $hash{$wbgene_id} = $family;
+ }
+}
+
+return \%hash;
 }

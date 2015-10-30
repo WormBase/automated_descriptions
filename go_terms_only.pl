@@ -13,7 +13,7 @@ my $PRODUCTION_RELEASE = ConciseDescriptions::get_production_release();
 my $path = $html . "concise_descriptions/release/$PRODUCTION_RELEASE/c_elegans/gene_lists/";
 
 my $url= 'http://geneontology.org/ontology/go.obo';
-my $input_file = 'go.obo';
+my $input_file = $path . 'go.obo';
 my $output_file = $path . "go_terms.txt";
 
 getstore($url, $input_file);

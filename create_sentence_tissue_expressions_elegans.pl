@@ -36,16 +36,32 @@ if (-e $output_log){
    my @args = ("/bin/rm", "-f", $output_log);
    system(@args) == 0 or die("could not delete file $output_log\n");
 }
+my $output_test_log = $output_path . "test_sentences_for_tissue_expression.txt";
+# if the output file exists delete it.
+if (-e $output_test_log){
+   my @args = ("/bin/rm", "-f", $output_test_log);
+   system(@args) == 0 or die("could not delete file $output_test_log\n");
+}
 my $output = $output_path . "gene_tissue_expression.txt";
+my $output_test = $output_path . "test_gene_tissue_expression.txt";
 my $output_genes = $output_path . "gene_ids_tissue_expression.txt";
+my $output_test_genes = $output_path . "test_gene_ids_tissue_expression.txt";
 # if the output file exists delete it.
 if (-e $output){
    my @args = ("/bin/rm", "-f", $output);
    system(@args) == 0 or die("could not delete file $output\n");
 }
+if (-e $output_test){
+   my @args = ("/bin/rm", "-f", $output_test);
+   system(@args) == 0 or die("could not delete file $output_test\n");
+}
 if (-e $output_genes){
    my @args = ("/bin/rm", "-f", $output_genes);
    system(@args) == 0 or die("could not delete file $output_genes\n");
+}
+if (-e $output_test_genes){
+   my @args = ("/bin/rm", "-f", $output_test_genes);
+   system(@args) == 0 or die("could not delete file $output_test_genes\n");
 }
 #
 # Define the ace file and ontology for anatomy
@@ -109,6 +125,8 @@ my @amphid_neurons=@{$amphid_neurons_ref};
 my ($parents_ref, $children_ref) = ConciseDescriptions::get_ontology_parents_children($input_ace_file, $ontology);
 my %parents = %$parents_ref;
 my %children = %$children_ref;
+my $instance_ref = ConciseDescriptions::get_ontology_instance($input_ace_file, $ontology);
+my %instance = %$instance_ref;
 # helper verb
 my $helper_verb = " is expressed in the ";
 my $helper_verb_widely = " is expressed widely";
@@ -462,6 +480,24 @@ while ($pointer <= $#wbbt_elements) {
    }
  }
 }
+         my @element_instance=();
+         foreach my $element (@wbbt_elements){
+          my $instance_of = $instance{$element};
+          my @i = split(/\,/,$instance_of);
+          foreach my $i (@i){
+           push(@element_instance, $i);
+          }
+         }
+         my @anatomy_instances=();
+         my @unique_anatomy_instances=();
+         my @unique_element_instance=uniq(@element_instance);
+         foreach my $i (@unique_element_instance){
+          my $a = $anatomy_ontology{$i};
+          push(@anatomy_instances, $a); 
+         }
+          @unique_anatomy_instances=uniq(@anatomy_instances);
+         my $Anatomy_Instance = join("\,", @unique_anatomy_instances);   
+
          foreach my $element (@wbbt_elements){
           my $a = $anatomy_ontology{$element};
           if ($a =~/neuron/){
@@ -485,19 +521,19 @@ while ($pointer <= $#wbbt_elements) {
 #
 #
     my $Anatomy = join("\,", @unique_anatomies);   
-    my $summary = "$gene_id\t$name\t$Anatomy\n";
+    my $summary = "$gene_id\t$name\t$Anatomy\n\t\t\t\t$Anatomy_Instance\n\n\n";
     my $gene_output = "$gene_id\n";
 
     my $size = @unique_anatomies;
     my $sentence = $name . $helper_verb;
     if ($size == 1){
       $sentence .= $unique_anatomies[0];
-    if ($sentence =~/Cell/){
+    if ($sentence =~/\bCell\b/){
         $sentence = $name . $helper_verb_widely;
     }
     } elsif ($size ==2){
       $sentence .= $unique_anatomies[0] . " and the " . $unique_anatomies[1];
-      if ($sentence =~/Cell/){
+      if ($sentence =~/\bCell\b/){
         my $not_cell = "";
         if ($unique_anatomies[0] =~/Cell/){
             $not_cell = $unique_anatomies[1];
@@ -519,7 +555,7 @@ while ($pointer <= $#wbbt_elements) {
          $sentence .= "\, " . $unique_anatomies[$index];
        }
       }
-      if ($sentence =~/Cell/){
+      if ($sentence =~/\bCell\b/){
           $sentence = $name . $helper_verb_several;
           $count = 0;
           my @no_cell = ();
@@ -550,17 +586,33 @@ while ($pointer <= $#wbbt_elements) {
     $sentence =~s/the certain/certain/g;
     $sentence =~s/\, male\,/\, in the male\,/g;
     $sentence =~s/\, and the male\;/\, and in the male\;/g;
+    $sentence =~s/and the male\;/and in the male\;/g;
+    $sentence =~s/including the male\;/including in the male\;/g;
     $sentence =~s/\, female\,/\, in the female\,/g;
     $sentence =~s/\, and the female\;/\, and in the female\;/g;
+    $sentence =~s/and the female\;/and in the female\;/g;
+    $sentence =~s/including the female\;/including in the female\;/g;
     $sentence =~s/\, hermaphrodite\,/\, in the hermaphrodite\,/g;
     $sentence =~s/\, and the hermaphrodite\;/\, and in the hermaphrodite\;/g;
+    $sentence =~s/and the hermaphrodite\;/and in the hermaphrodite\;/g;
+    $sentence =~s/including the hermaphrodite\;/including in the hermaphrodite\;/g;
 
-    write_file($output, {append => 1 }, $summary);
-    write_file($output_genes, {append => 1 }, $gene_output);
-    write_file($output_log, {append => 1 }, $gene_output);
-    write_file($output_log, {append => 1 }, $sentence);
-    write_file($output_log, {append => 1 }, "\n\n\n");
-    write_file($gene_file, $sentence);
+    my @sentence_terms = split(/\,/, $sentence);
+
+     write_file($output_test, {append => 1 }, $summary);
+     write_file($output_test_genes, {append => 1 }, $gene_output);
+     write_file($output_test_log, {append => 1 }, $gene_output);
+     write_file($output_test_log, {append => 1 }, $sentence);
+     write_file($output_test_log, {append => 1 }, "\n\n\n");
+
+    if (@sentence_terms < 21) {
+     write_file($output, {append => 1 }, $summary);
+     write_file($output_genes, {append => 1 }, $gene_output);
+     write_file($output_log, {append => 1 }, $gene_output);
+     write_file($output_log, {append => 1 }, $sentence);
+     write_file($output_log, {append => 1 }, "\n\n\n");
+     write_file($gene_file, $sentence);
+    }
  }
 }
 exit 0;

@@ -49,11 +49,16 @@ my $count_automated_only_total=0;
 foreach my $species (@species_array){
  my $individual_gene_descriptions_directory = "$home/release/$PRODUCTION_RELEASE/$species/descriptions/individual_gene_descriptions/";
  my $orthology_directory ="$home/release/$PRODUCTION_RELEASE/$species/orthology/output_files/individual_gene_sentences/";
- my $GO_directory ="$home/release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_gene_sentences/";
+ my $GO_function_directory ="$home/release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_function_sentences/";
+ my $GO_process_directory ="$home/release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_process_sentences/";
+ my $GO_component_directory ="$home/release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_component_sentences/";
  my $tissue_directory = "$home/release/$PRODUCTION_RELEASE/$species/tissue_expression/output_files/individual_gene_sentences/";
  if (-e $individual_gene_descriptions_directory ) {
      my @descriptions = read_dir( $individual_gene_descriptions_directory, prefix => 1 );
-     my @GO = read_dir($GO_directory, prefix => 1 );
+     my @process   = read_dir($GO_process_directory, prefix => 1 );
+     my @function  = read_dir($GO_function_directory, prefix => 1 );
+     my @component = read_dir($GO_component_directory, prefix => 1 );
+
      my @orthology = read_dir($orthology_directory, prefix => 1 );
      my @tissue=();
      if (-e $tissue_directory){
@@ -76,7 +81,10 @@ foreach my $species (@species_array){
      }
 
      my $orthology_count = @orthology;
-     my $go_count = @GO;
+     my $process_count   = @process;
+     my $function_count  = @function;
+     my $component_count = @component;
+
      my $tissue_count = @tissue;
      my $count = @descriptions;
      my $name = $species_name_hash{$species};
@@ -84,7 +92,9 @@ foreach my $species (@species_array){
      my $name_list = "$name\n";
      my $commify_count = commify($count);
      my $commify_orthology_count = commify($orthology_count);
-     my $commify_go_count = commify($go_count);
+     my $commify_process_count = commify($process_count);
+     my $commify_component_count = commify($component_count);
+     my $commify_function_count = commify($function_count);
      my $commify_tissue_count = commify($tissue_count);
      write_file($summary, {append => 1 }, $name_list);
      my $text = "$commify_count individual gene descriptions\n";
@@ -100,8 +110,12 @@ foreach my $species (@species_array){
      write_file($summary, {append => 1 }, $subtract_count_text);
      my $orthology_text = "$commify_orthology_count orthology sentences\n";
      write_file($summary, {append => 1 }, $orthology_text);
-     my $go_text = "$commify_go_count gene ontology sentences\n";
-     write_file($summary, {append => 1 }, $go_text);
+     my $process_text = "$commify_process_count gene ontology process sentences\n";
+     write_file($summary, {append => 1 }, $process_text);
+     my $function_text = "$commify_function_count gene ontology molecular function sentences\n";
+     write_file($summary, {append => 1 }, $function_text);
+     my $component_text = "$commify_component_count gene ontology cellular component sentences\n";
+     write_file($summary, {append => 1 }, $component_text);
      my $tissue_text = "$commify_tissue_count tissue expression sentences\n";
      write_file($summary, {append => 1 }, $tissue_text);
      write_file($summary, {append => 1 }, $single_breakln);

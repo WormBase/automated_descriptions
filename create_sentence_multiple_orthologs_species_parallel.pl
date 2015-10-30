@@ -254,9 +254,9 @@ if (@orthologs >= 5){
 
 @families = uniq(@families);
 
-if ($family_hash{"cosmids"}){
- my $c = $family_hash{"cosmids"};
-}
+#if ($family_hash{"cosmids"}){
+# my $c = $family_hash{"cosmids"};
+#}
 my %sorted_gene_family=();
 foreach my $f (@families){
   my @genes = split(/\,/, $family_hash{$f});
@@ -437,7 +437,7 @@ foreach my $c (@cosmids){
      $sentence .= $gene;  
     } elsif (($kount > 0) and ($kount < ($size-1))){
      $sentence .= "\, " . $gene;  
-    } elsif (($kount > 0) and ($kount == ($size-1))){
+    } elsif (($kount > 0) and ($kount == ($size-1)) and ($size > 1)){
      $sentence .= " and " . $gene;  
     }
  $kount++;
