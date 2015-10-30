@@ -64,7 +64,9 @@ if (-e $report){
 } 
 #
 my $homology_directory= $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/orthology/output_files/individual_gene_sentences/";
-my $go_directory= $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_gene_sentences/";
+my $go_function_directory= $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_function_sentences/";
+my $go_process_directory= $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_process_sentences/";
+my $go_component_directory= $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_component_sentences/";
 my $tissue_expression_directory = $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/tissue_expression/output_files/individual_gene_sentences/";
 my $homology_go_from_elegans_directory="";
 my @homology_go_from_elegans_files=();
@@ -85,11 +87,13 @@ if ($species !~/elegans/){
    }
 #
 my @homology_files  = glob("$homology_directory/WBGene*");
-my @go_files  = glob("$go_directory/WBGene*");
+my @component_files = glob("$go_component_directory/WBGene*");
+my @function_files  = glob("$go_function_directory/WBGene*");
+my @process_files   = glob("$go_process_directory/WBGene*");
 #
 # Create a list of genes
 #
-my @list = (@homology_files, @go_files, @tissue_expression_files);
+my @list = (@homology_files, @component_files, @function_files, @process_files, @tissue_expression_files);
 #
  my @unsorted_files = ();
  foreach my $item (@list){
@@ -103,7 +107,9 @@ my @list = (@homology_files, @go_files, @tissue_expression_files);
 # Keep a counter for each data 
 #
 my $homology_size =0;
-my $go_size  =0;
+my $process_size  =0;
+my $function_size =0;
+my $component_size=0;
 my $tissue_size = 0;
 #
 foreach my $file (@sort_unique_list){
@@ -113,15 +119,21 @@ foreach my $file (@sort_unique_list){
 #
  my $homology_no_go_file  = $homology_directory  . $file;
  my $homology_go_from_elegans_file  = $homology_go_from_elegans_directory  . $file;
- my $go_file  = $go_directory  . $file;
+ my $go_process_file   = $go_process_directory  . $file;
+ my $go_component_file = $go_component_directory  . $file;
+ my $go_function_file  = $go_function_directory  . $file;
+
  my $tissue_file = $tissue_expression_directory . $file;
  my $homology ="";
- my $homology_go = "";
- my $go ="";
+ my $homology_go  = "";
+ my $go_process   ="";
+ my $go_component ="";
+ my $go_function  ="";
  my $tissue = "";
 
  if (-e $tissue_file ){
    $tissue = read_file($tissue_file);
+   chomp($tissue);
    $tissue_size++;
  }
 
@@ -137,23 +149,47 @@ foreach my $file (@sort_unique_list){
      }
      $homology_size++;
      }
- if (-e $go_file) {
-     $go = read_file($go_file);
-     $go_size++;
+ if (-e $go_process_file) {
+     $go_process = read_file($go_process_file);
+     $process_size++;
+     }
+ if (-e $go_function_file) {
+     $go_function = read_file($go_function_file);
+     $function_size++;
+     }
+ if (-e $go_component_file) {
+     $go_component = read_file($go_component_file);
+     $component_size++;
      }
      $homology    =~ s/^\s+//;
      $homology    =~ s/\s+$//;
-     $go   =~ s/^\s+//;
-     $go   =~ s/\s+$//;
+     $go_function =~ s/^\s+//;
+     $go_function =~ s/\s+$//;
+     $go_component=~ s/^\s+//;
+     $go_component=~ s/\s+$//;
+     $go_process  =~ s/^\s+//;
+     $go_process  =~ s/\s+$//;
 
-     if ($go){
-      chomp($go);
-      chop($go);
-      $go .= "\;";
+     if ($go_process){
+      chomp($go_process);
+      chop($go_process);
+      $go_process .= "\;";
      }
+     if ($go_function){
+      chomp($go_function);
+      chop($go_function);
+      $go_function .= "\;";
+     }
+     if ($go_component){
+      chomp($go_component);
+      chop($go_component);
+      $go_component .= "\;";
+     }
+
  my $output;
-    $output = $homology . " " . $go . " " . $tissue;
+    $output = $homology . " " . $go_process  . " " . $go_function . " " . $tissue . " " . $go_component;
     $output =~ s/  / /g;
+    $output =~ s/\n//g;
     $output =~ s/$double_space/$space/g;
 
     $output =~ s/^\s+//;
@@ -206,10 +242,12 @@ foreach my $description (@concise_description_files){
  $sum++;
 }
 my $total = "Total number of automated descriptions\: " . $sum . "\n";
-my $number_homology = "Number of automated descriptions with orthology\: " . $homology_size . "\n";
-my $number_go = "Number of automated descriptions with GO information\: " . $go_size . "\n";
+my $number_homology  = "Number of automated descriptions with orthology\: " . $homology_size . "\n";
+my $number_process   = "Number of automated descriptions with GO process information\: " . $process_size . "\n";
+my $number_function  = "Number of automated descriptions with GO molecular function information\: " . $function_size . "\n";
+my $number_component = "Number of automated descriptions with GO cellular component information\: " . $component_size . "\n";
 my $number_tissue = "Number of automated descriptions with tissue expression information\: " . $tissue_size . "\n";
-my $report_output = $total . $number_homology . $number_go . $number_tissue;
+my $report_output = $total . $number_homology . $number_process . $number_function . $number_component . $number_tissue;
  write_file($report, $report_output); 
 #
 }
