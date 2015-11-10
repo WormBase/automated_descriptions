@@ -83,6 +83,8 @@ my $component_watch_string_the = "integral component of the";
 #my $is_cellular="is intracellular";
 my $structural="structural constituent";
 my $is_structural="is a structural constituent";
+#my $comma_structural="\, structural constituent";
+#my $comma_is_structural="\, is a structural constituent";
 #
 my $synaptic_1_0 = "synaptic transmission\, GABAergic";
 my $synaptic_1_1 = "GABAergic synaptic transmission";
@@ -459,7 +461,7 @@ foreach my $gene_id (@sorted_uncurated_genes_array){
         $component_string = get_verb_component_goterm(\@GO_components);
         print "component $component_string\n";
         $component_string =~ s/$component_watch_string/$component_watch_string_the/g;
-        $component_string =~ s/$structural/$is_structural/g;
+#        $component_string =~ s/$structural/$is_structural/g;
         $component_string =~ s/$the_the/$the/g;
         $component_string =~ s/$blank_comma/$comma/g;
 
@@ -495,6 +497,12 @@ foreach my $gene_id (@sorted_uncurated_genes_array){
   if (($process_string) or ($function_string) or ($component_string)){
           my $doublespace = "  ";
           my $space = " ";
+          $component_string =~s/$growth_0/$growth_1/g;
+          $component_string =~s/$structural/$is_structural/g;
+          $function_string =~s/$growth_0/$growth_1/g;
+          $function_string =~s/$structural/$is_structural/g;
+          $process_string =~s/$growth_0/$growth_1/g;
+          $process_string =~s/$structural/$is_structural/g;
 # remove redundant is
           $process_string =~s/$is_is/$is/g;
           $process_string =~s/$is_a_is_a/$is_a/g;
@@ -502,13 +510,6 @@ foreach my $gene_id (@sorted_uncurated_genes_array){
           $function_string =~s/$is_a_is_a/$is_a/g;
           $component_string =~s/$is_is/$is/g;
           $component_string =~s/$is_a_is_a/$is_a/g;
-#
-          $component_string =~s/$growth_0/$growth_1/g;
-          $component_string =~s/$structural/$is_structural/g;
-          $function_string =~s/$growth_0/$growth_1/g;
-          $function_string =~s/$structural/$is_structural/g;
-          $process_string =~s/$growth_0/$growth_1/g;
-          $process_string =~s/$structural/$is_structural/g;
 # remove any double spaces
           $component_string =~s/$doublespace/$space/g;
           $function_string  =~s/$doublespace/$space/g;
@@ -549,6 +550,13 @@ foreach my $gene_id (@sorted_uncurated_genes_array){
           }
           }
          }
+# remove redundant is
+          $process_string =~s/$is_is/$is/g;
+          $process_string =~s/$is_a_is_a/$is_a/g;
+          $function_string =~s/$is_is/$is/g;
+          $function_string =~s/$is_a_is_a/$is_a/g;
+          $component_string =~s/$is_is/$is/g;
+          $component_string =~s/$is_a_is_a/$is_a/g;
 # remove any double spaces
           $component_string =~s/$doublespace/$space/g;
           $function_string  =~s/$doublespace/$space/g;
