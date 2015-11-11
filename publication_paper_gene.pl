@@ -26,7 +26,7 @@ if (-e $output){
   my @args = ("rm", "-f", $output);
   system(@args) == 0 or die("could not delete file $output\n");
 }
-my $header="\tpaper id\t\tgenes\n";
+my $header="  paper id\t\tgenes\n";
 write_file($output, {append => 1 }, $header);
  
  my %hash=();
@@ -190,8 +190,11 @@ sub get_papers {
         $line =~s/\s+$//;
         next if ($line =~/^\s*$/);
         $line =~s/\#.*//g;
-        $line =~s/\.*//g;
-        $line =~s/\.//g;
+#        $line =~s/\.*//g;
+#        $line =~s/\.//g;
+        if ($line =~/^(.*)\./){
+            $line = $1;
+        }
         if ($line =~/^WBPaper/){
          print "There is WBPaper $line\n";
         } else {
