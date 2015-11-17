@@ -68,15 +68,17 @@ $first_letter = lc($first_letter);
 $second_letter = lc($second_letter);
 $gene = lc($gene);
 
-my $wbpapers_ref = get_papers($first_letter, $second_letter, $gene);
+my ($count_hash_ref, $wbpapers_ref) = get_papers($first_letter, $second_letter, $gene);
 my @wbpapers = @{$wbpapers_ref};
+my %count_hash = %{$count_hash_ref};
 
 foreach my $wb (@wbpapers){
  my $newid=$wb . "AND" . $gene_id;
+ my $count = $count_hash{$wb};
  if ($occurence_hash{$newid}){
-  $occurence_hash{$newid}++;
+  $occurence_hash{$newid}+=$count;
  } else {
-  $occurence_hash{$newid}=1;
+  $occurence_hash{$newid}=$count;
  }
  push(@papers, $wb);
  }
@@ -87,15 +89,17 @@ $first_letter = uc($first_letter);
 $second_letter = uc($second_letter);
 $gene = uc(lc $gene);
 
-  $wbpapers_ref = get_papers($first_letter, $second_letter, $gene);
+  ($count_hash_ref, $wbpapers_ref) = get_papers($first_letter, $second_letter, $gene);
   @wbpapers = @{$wbpapers_ref};
+  %count_hash = %{$count_hash_ref};
 
 foreach my $wb (@wbpapers){
  my $newid=$wb . "AND" . $gene_id;
+ my $count = $count_hash{$wb};
  if ($occurence_hash{$newid}){
-  $occurence_hash{$newid}++;
+  $occurence_hash{$newid}+=$count;
  } else {
-  $occurence_hash{$newid}=1;
+  $occurence_hash{$newid}=$count;
  }
  push(@papers, $wb);
  }
@@ -106,14 +110,16 @@ $first_letter = uc($first_letter);
 $second_letter = lc($second_letter);
 $gene = ucfirst(lc $gene);
 
-  $wbpapers_ref = get_papers($first_letter, $second_letter, $gene);
+  ($count_hash_ref, $wbpapers_ref) = get_papers($first_letter, $second_letter, $gene);
   @wbpapers = @{$wbpapers_ref};
+  %count_hash = %{$count_hash_ref};
   foreach my $wb (@wbpapers){
+ my $count = $count_hash{$wb};
  my $newid=$wb . "AND" . $gene_id;
  if ($occurence_hash{$newid}){
-  $occurence_hash{$newid}++;
+  $occurence_hash{$newid}+=$count;
  } else {
-  $occurence_hash{$newid}=1;
+  $occurence_hash{$newid}=$count;
  }
    push(@papers, $wb);
   }
@@ -175,7 +181,7 @@ sub get_papers {
  my $gene = shift;
  my @papers=();
  my @sections = qw(body);
-
+ my %count_hash=();
  foreach my $section (@sections){
   my $url_base = "http://textpresso-dev.caltech.edu/celegans/tdb/celegans/ind/$section/keyword/";
   my $webpage = $url_base . $first_letter . "/" . $second_letter . "/" . $gene;
@@ -189,24 +195,30 @@ sub get_papers {
         $line =~s/^\s+//;
         $line =~s/\s+$//;
         next if ($line =~/^\s*$/);
-        $line =~s/\#.*//g;
+        my ($paper, $place) = split(/\#/, $line);
+        $paper =~s/^\s+//;
+        $paper =~s/\s+$//;
+        $place =~s/^\s+//;
+        $place =~s/\s+$//;
+        my @places = split(/ /,$place);
+        my $count = @places;
+#        $line =~s/\#.*//g;
 #        $line =~s/\.*//g;
 #        $line =~s/\.//g;
-        if ($line =~/^(.*)\./){
-            $line = $1;
+        if ($paper =~/^(.*)\./){
+            $paper = $1;
         }
-        if ($line =~/^WBPaper/){
-         print "There is WBPaper $line\n";
-        } else {
-         $line = "WBPaper" . $line;
+        if ($paper !~/^WBPaper/){
+         $paper = "WBPaper" . $paper;
         }
-         push(@papers, $line);
+         $count_hash{$paper} = $count;
+         push(@papers, $paper);
        }
       }
      }
     }
 
- return \@papers;
+ return (\%count_hash, \@papers);
 }
 sub get_synonym_hash{
 my $webpage = shift;
