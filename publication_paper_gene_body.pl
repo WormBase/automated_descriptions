@@ -58,7 +58,7 @@ foreach my $gene_id (@sorted_genes){
  my @genes = split(/\,/, $gene_list);
  my @unique_genes = uniq(@genes);
  my $unique_gene_list = join(',', @unique_genes);
- foreach my $gene (@genes){
+ foreach my $gene (@unique_genes){
  my $first_letter = substr($gene, 0, 1);
  my $second_letter = substr($gene, 1, 1);
 
