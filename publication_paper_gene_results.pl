@@ -59,19 +59,16 @@ foreach my $gene_id (@sorted_genes){
  my @unique_genes = uniq(@genes);
  my $unique_gene_list = join(',', @unique_genes);
  foreach my $gene (@unique_genes){
- my $first_letter = substr($gene, 0, 1);
- my $second_letter = substr($gene, 1, 1);
-
+  if (($gene=~/\S+\-\d+/) or ($gene=~/\S+\.\S+/)){
+  my $first_letter = substr($gene, 0, 1);
+  my $second_letter = substr($gene, 1, 1);
 # first case: lc first . lc second . lc rest of gene
-
 $first_letter = lc($first_letter);
 $second_letter = lc($second_letter);
 $gene = lc($gene);
-
 my ($count_hash_ref, $wbpapers_ref) = get_papers($first_letter, $second_letter, $gene);
 my @wbpapers = @{$wbpapers_ref};
 my %count_hash = %{$count_hash_ref};
-
 foreach my $wb (@wbpapers){
  my $newid=$wb . "AND" . $gene_id;
  my $count = $count_hash{$wb};
@@ -82,17 +79,13 @@ foreach my $wb (@wbpapers){
  }
  push(@papers, $wb);
  }
-
 # second case: uc first . uc second . uc rest of gene
-
 $first_letter = uc($first_letter);
 $second_letter = uc($second_letter);
 $gene = uc(lc $gene);
-
   ($count_hash_ref, $wbpapers_ref) = get_papers($first_letter, $second_letter, $gene);
   @wbpapers = @{$wbpapers_ref};
   %count_hash = %{$count_hash_ref};
-
 foreach my $wb (@wbpapers){
  my $newid=$wb . "AND" . $gene_id;
  my $count = $count_hash{$wb};
@@ -103,13 +96,10 @@ foreach my $wb (@wbpapers){
  }
  push(@papers, $wb);
  }
-
 # first case: uc first . lc second . lc rest of gene
-
 $first_letter = uc($first_letter);
 $second_letter = lc($second_letter);
 $gene = ucfirst(lc $gene);
-
   ($count_hash_ref, $wbpapers_ref) = get_papers($first_letter, $second_letter, $gene);
   @wbpapers = @{$wbpapers_ref};
   %count_hash = %{$count_hash_ref};
@@ -125,13 +115,12 @@ $gene = ucfirst(lc $gene);
   }
 #print "There are $count publications\.\n";
 $gene = lc($gene);
+} # if gene matches xxx-# or xxx.x
 } # for each gene (each synonym of gene id)
-
 my @unique_papers = uniq(@papers);
 foreach my $p (@unique_papers){
  push(@all_papers, $p);
 }
-
 $unique_gene_list =~s/\#//g;
 $unique_gene_list =~s/\s+//g;
 $unique_gene_list_hash{$gene_id}=$unique_gene_list;
@@ -139,9 +128,7 @@ $unique_gene_list_hash{$gene_id}=$unique_gene_list;
 #write_file($output, {append => 1 }, $output_string);
 
 } # foreach gene id
-
 } # if db gene list exists
-
 
 my @unique_all_papers = sort(uniq(@all_papers));
 foreach my $p (@unique_all_papers){

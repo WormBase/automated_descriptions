@@ -59,6 +59,7 @@ foreach my $gene_id (@sorted_genes){
  my @unique_genes = uniq(@genes);
  my $unique_gene_list = join(',', @unique_genes);
  foreach my $gene (@unique_genes){
+ if (($gene=~/\S+\-\d+/) or ($gene=~/\S+\.\S+/)){ 
  my $first_letter = substr($gene, 0, 1);
  my $second_letter = substr($gene, 1, 1);
 
@@ -125,6 +126,7 @@ $gene = ucfirst(lc $gene);
   }
 #print "There are $count publications\.\n";
 $gene = lc($gene);
+} # if gene matches 
 } # for each gene (each synonym of gene id)
 
 my @unique_papers = uniq(@papers);
@@ -137,6 +139,7 @@ $unique_gene_list =~s/\s+//g;
 $unique_gene_list_hash{$gene_id}=$unique_gene_list;
 #my $output_string ="$gene_id\t$unique_gene_list\t$count\n";
 #write_file($output, {append => 1 }, $output_string);
+
 
 } # foreach gene id
 
