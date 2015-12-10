@@ -27,6 +27,11 @@ $text =~s/expand\_assertion\_to\:\s\"Class\:\s\<http\:\/\/www\.w3\.org\/2002\/07
 $text =~s/property\_value\: propformat\-version \"1\.2\" xsd\:string//gi;
 $text =~s/property\_value\: IAO\:0000589 \"cell and encapsulating structures\" xsd\:string//gi;
 $text =~s/expand\_assertion\_to\: \"Class\: \?X DisjointWith\: RO\_0002162 some \?Y\" \[\]//gi;
+$text =~s/EXACT \[\S+\]/EXACT \[\]/g;
+$text =~s/NARROW \[\d+\, PMID\:\d+\]/NARROW \[\]/g;
+$text =~s/NARROW \[PMID\:\d+\]/NARROW \[\]/g;
+$text =~s/RELATED \[\d+\, PMID\:\d+\]/RELATED \[\]/g;
+
 write_file( $input_file, \$text ) ;
 			
 my $my_parser = OBO::Parser::OBOParser->new();
