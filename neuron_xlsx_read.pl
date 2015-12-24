@@ -6,6 +6,7 @@ use List::MoreUtils qw(uniq);
 use Switch;
 use Spreadsheet::XLSX;
 use File::Slurp;
+use File::Copy;
 use Data::Dumper;
 use ConciseDescriptions;
 #
@@ -16,7 +17,10 @@ my $home_elegans = $html . "concise_descriptions/release/$PRODUCTION_RELEASE/c_e
 my $tissue_dir = $home_elegans . "tissue_expression/";
 my $gene_list_dir = $home_elegans . "gene_lists/" ;
 my $input_path = $tissue_dir . "input_files/";
+my $old_input_path = $html . "concise_descriptions/release/$RELEASE/c_elegans/tissue_expression/input_files/";
 my $xlsx_file = $input_path . "Neuron_list_Ranjana.xlsx";
+my $old_xlsx_file = $old_input_path . "Neuron_list_Ranjana.xlsx";
+copy($old_xlsx_file, $xlsx_file);
 #
 my $vnc = "ventral cord neuron"; 
 my $vnc2 = "vnc motor neuron"; 
