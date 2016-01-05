@@ -21,7 +21,7 @@ my $deadList = "http://brahma.textpresso.org/concise_descriptions/release/$PRODU
 my $dead_hash_ref = get_dead_hash($deadList);
 my %dead_hash = %{$dead_hash_ref};
 my $output_dir = $html . "concise_descriptions/textpresso/";
-my $output = $output_dir . "textpresso_papers_results_genes.txt";
+my $output = $output_dir . "textpresso_papers_results_genes.all.txt";
 if (-e $output){
   my @args = ("rm", "-f", $output);
   system(@args) == 0 or die("could not delete file $output\n");
