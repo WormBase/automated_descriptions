@@ -4,13 +4,14 @@ use warnings;
 use ConciseDescriptions;
 use Ace;        # Import the AcePerl library
 use File::Slurp;
+use File::Copy;
 
 my $RELEASE = ConciseDescriptions::get_release();
 my $PRODUCTION_RELEASE = ConciseDescriptions::get_production_release();
 my $html = ConciseDescriptions::get_html_dir();
 my $home = $html . "concise_descriptions/";
 my $elegans_gene_list_dir = $home . "release/$PRODUCTION_RELEASE/c_elegans/gene_lists/";
-    
+my $old_file = $home . "release/$RELEASE/c_elegans/gene_lists/acedb_gene_class.txt";
 my $output_file = $elegans_gene_list_dir . "acedb_gene_class.txt";
 if (-e $output_file) {
  my @args = ("/bin/rm", "-f", $output_file);
@@ -24,13 +25,11 @@ my $port = read_file("./acedb_port.txt");
 chomp($port);
 $port =~s/^\s+//;
 $port =~s/\s+$//;
-my $db = Ace->connect( -host => $host, -port => $port )
-        or die "Can't connect to '$host' on port '$port' : ", Ace->error;
+my $db = Ace->connect( -host => $host, -port => $port );
+#        or die "Can't connect to '$host' on port '$port' : ", Ace->error;
 
-#if ($db) {
+if ($db) {
 #    print "Connection great !\n";
-# }
-
 my $aql_query = "select item, item->Genes from item in class Gene_Class";
 my $count   = $db->aql($aql_query);
 my @objects = $db->aql($aql_query);
@@ -52,5 +51,10 @@ foreach my $obj (@objects){
  }
 }
 $db->close();
+
+} else {
+# print "Using file from $RELEASE\n";
+ copy($old_file, $output_file);
+}
 
 exit 0;
