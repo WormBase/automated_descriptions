@@ -39,6 +39,21 @@ my $tissue_expression_elegans_input = $species_directory . "tissue\_expression\/
 my $tissue_expression_elegans_output = $species_directory . "tissue\_expression\/output\_files";
 my $tissue_expression_elegans_output_directory = $species_directory . "tissue\_expression\/output\_files\/individual\_gene\_sentences\/";
 
+my $anatomy_expression_cluster_directory = $species_directory . "anatomy\_expression\_cluster\/";
+my $anatomy_expression_cluster_input_directory = $species_directory  . "anatomy\_expression\_cluster\/input\_files\/";
+my $anatomy_expression_cluster_output_directory = $species_directory . "anatomy\_expression\_cluster\/output\_files\/";
+my $anatomy_expression_cluster_individual_output_directory = $species_directory . "anatomy\_expression\_cluster\/output\_files\/individual\_gene\_sentences\/";
+
+my $gene_regulation_expression_cluster_directory = $species_directory . "gene\_regulation\_expression\_cluster\/";
+my $gene_regulation_expression_cluster_input_directory = $species_directory  . "gene\_regulation\_expression\_cluster\/input\_files\/";
+my $gene_regulation_expression_cluster_output_directory = $species_directory . "gene\_regulation\_expression\_cluster\/output\_files\/";
+my $gene_regulation_expression_cluster_individual_output_directory = $species_directory . "gene\_regulation\_expression\_cluster\/output\_files\/individual\_gene\_sentences\/";
+
+my $molecule_regulation_expression_cluster_directory = $species_directory . "molecule\_regulation\_expression\_cluster\/";
+my $molecule_regulation_expression_cluster_input_directory = $species_directory  . "molecule\_regulation\_expression\_cluster\/input\_files\/";
+my $molecule_regulation_expression_cluster_output_directory = $species_directory . "molecule\_regulation\_expression\_cluster\/output\_files\/";
+my $molecule_regulation_expression_cluster_individual_output_directory = $species_directory . "molecule\_regulation\_expression\_cluster\/output\_files\/individual\_gene\_sentences\/";
+
 if (($species) and ($release)) {
 
  make_dir($release_directory);
@@ -56,6 +71,18 @@ if (($species) and ($release)) {
  make_dir($orthology_input_directory);
  make_dir($orthology_output_directory);
  make_dir($orthology_individual_output_directory);
+ make_dir($anatomy_expression_cluster_directory);
+ make_dir($anatomy_expression_cluster_input_directory);
+ make_dir($anatomy_expression_cluster_output_directory);
+ make_dir($anatomy_expression_cluster_individual_output_directory);
+ make_dir($gene_regulation_expression_cluster_directory);
+ make_dir($gene_regulation_expression_cluster_input_directory);
+ make_dir($gene_regulation_expression_cluster_output_directory);
+ make_dir($gene_regulation_expression_cluster_individual_output_directory);
+ make_dir($molecule_regulation_expression_cluster_directory);
+ make_dir($molecule_regulation_expression_cluster_input_directory);
+ make_dir($molecule_regulation_expression_cluster_output_directory);
+ make_dir($molecule_regulation_expression_cluster_individual_output_directory);
 
  if ($species !~/elegans/){
    make_dir($orthology_individual_output_directory_from_go_elegans);

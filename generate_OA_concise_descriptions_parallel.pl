@@ -46,6 +46,7 @@ my $path = $home . "release/$PRODUCTION_RELEASE/$species/descriptions/";
 my $description_directory= $path . "individual_gene_descriptions/";
 my $orthology = $home . "release/$PRODUCTION_RELEASE/$species/orthology/";
 my $elegans_orthology = $home . "release/$PRODUCTION_RELEASE/c_elegans/orthology/";
+my $old_elegans_orthology = $home . "release/$RELEASE/c_elegans/orthology/";
 my $go_home = $home . "release/$PRODUCTION_RELEASE/$species/gene_ontology/";
 my $tissue_home = $home . "release/$PRODUCTION_RELEASE/$species/tissue_expression/";
 my $summary = $path . "OA_concise_descriptions.$PRODUCTION_RELEASE.txt";
@@ -71,7 +72,7 @@ $current_date = substr($current_date,0,-1);
 my $biomart = $elegans_orthology . "input_files/HumanIDs_mart_export.txt";
 my $reading_biomart_file_for_error = read_file($biomart);
 if ($reading_biomart_file_for_error =~ /ERROR/){
-    $biomart =  $elegans_orthology . "input_files/HumanIDs_mart_export.org.txt";
+    $biomart =  $old_elegans_orthology . "input_files/HumanIDs_mart_export.txt";
 }
 #
 

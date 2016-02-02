@@ -68,6 +68,9 @@ my $go_function_directory= $concise_descriptions . "release/$PRODUCTION_RELEASE/
 my $go_process_directory= $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_process_sentences/";
 my $go_component_directory= $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/gene_ontology/output_files/individual_component_sentences/";
 my $tissue_expression_directory = $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/tissue_expression/output_files/individual_gene_sentences/";
+my $anatomy_ec_directory = $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/anatomy_expression_cluster/output_files/individual_gene_sentences/";
+my $molecule_reg_ec_directory = $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/molecule_regulation_expression_cluster/output_files/individual_gene_sentences/";
+my $gene_reg_ec_directory = $concise_descriptions . "release/$PRODUCTION_RELEASE/$species/gene_regulation_expression_cluster/output_files/individual_gene_sentences/";
 my $homology_go_from_elegans_directory="";
 my @homology_go_from_elegans_files=();
 my @tissue_expression_files = ();
@@ -90,10 +93,13 @@ my @homology_files  = glob("$homology_directory/WBGene*");
 my @component_files = glob("$go_component_directory/WBGene*");
 my @function_files  = glob("$go_function_directory/WBGene*");
 my @process_files   = glob("$go_process_directory/WBGene*");
+my @anatomy_ec_files = glob("$anatomy_ec_directory/WBGene*");
+my @molecule_reg_ec_files = glob("$molecule_reg_ec_directory/WBGene*");
+my @gene_reg_ec_files = glob("$gene_reg_ec_directory/WBGene*");
 #
 # Create a list of genes
 #
-my @list = (@homology_files, @component_files, @function_files, @process_files, @tissue_expression_files);
+my @list = (@homology_files, @component_files, @function_files, @process_files, @tissue_expression_files, @anatomy_ec_files, @molecule_reg_ec_files, @gene_reg_ec_files);
 #
  my @unsorted_files = ();
  foreach my $item (@list){
@@ -111,6 +117,9 @@ my $process_size  =0;
 my $function_size =0;
 my $component_size=0;
 my $tissue_size = 0;
+my $gene_ec_size = 0;
+my $mole_ec_size = 0;
+my $anatomy_ec_size = 0;
 #
 foreach my $file (@sort_unique_list){
  write_file($summary, {append => 1 }, $dash_line);
@@ -122,7 +131,9 @@ foreach my $file (@sort_unique_list){
  my $go_process_file   = $go_process_directory  . $file;
  my $go_component_file = $go_component_directory  . $file;
  my $go_function_file  = $go_function_directory  . $file;
-
+ my $gene_ec_file = $gene_reg_ec_directory . $file;
+ my $mole_ec_file = $molecule_reg_ec_directory . $file;
+ my $anatomy_ec_file = $anatomy_ec_directory . $file;
  my $tissue_file = $tissue_expression_directory . $file;
  my $homology ="";
  my $homology_go  = "";
@@ -130,11 +141,32 @@ foreach my $file (@sort_unique_list){
  my $go_component ="";
  my $go_function  ="";
  my $tissue = "";
+ my $gene_ec = "";
+ my $mole_ec = "";
+ my $anatomy_ec = "";
 
  if (-e $tissue_file ){
    $tissue = read_file($tissue_file);
    chomp($tissue);
    $tissue_size++;
+ }
+
+ if (-e $gene_ec_file ){
+   $gene_ec = read_file($gene_ec_file);
+   chomp($gene_ec);
+   $gene_ec_size++;
+ }
+
+ if (-e $mole_ec_file ){
+   $mole_ec = read_file($mole_ec_file);
+   chomp($mole_ec);
+   $mole_ec_size++;
+ }
+
+ if (-e $anatomy_ec_file ){
+   $anatomy_ec = read_file($anatomy_ec_file);
+   chomp($anatomy_ec);
+   $anatomy_ec_size++;
  }
 
   if (-e $homology_no_go_file) {
@@ -169,6 +201,12 @@ foreach my $file (@sort_unique_list){
      $go_component=~ s/\s+$//;
      $go_process  =~ s/^\s+//;
      $go_process  =~ s/\s+$//;
+     $anatomy_ec  =~ s/^\s+//;
+     $anatomy_ec  =~ s/\s+$//;
+     $gene_ec  =~ s/^\s+//;
+     $gene_ec  =~ s/\s+$//;
+     $mole_ec  =~ s/^\s+//;
+     $mole_ec  =~ s/\s+$//;
 
      if ($go_process){
       chomp($go_process);
@@ -187,7 +225,13 @@ foreach my $file (@sort_unique_list){
      }
 
  my $output;
-    $output = $homology . " " . $go_process  . " " . $go_function . " " . $tissue . " " . $go_component;
+    if (($go_process) or ($go_function) or ($go_component) or ($tissue)){
+     $output = $homology . " " . $go_process  . " " . $go_function . " " . $tissue . " " . $go_component;
+    } elsif ($homology) {
+     $output = $homology . " " . $gene_ec . " " . $mole_ec . " " . $anatomy_ec;
+    } else {
+     $output = ucfirst($gene_ec) . " " . $mole_ec . " " . $anatomy_ec;
+    }
     $output =~ s/  / /g;
     $output =~ s/\n//g;
     $output =~ s/$double_space/$space/g;
@@ -247,7 +291,12 @@ my $number_process   = "Number of automated descriptions with GO process informa
 my $number_function  = "Number of automated descriptions with GO molecular function information\: " . $function_size . "\n";
 my $number_component = "Number of automated descriptions with GO cellular component information\: " . $component_size . "\n";
 my $number_tissue = "Number of automated descriptions with tissue expression information\: " . $tissue_size . "\n";
+my $number_gene = "Number of automated descriptions with gene regulation expression cluster information\: " . $gene_ec_size . "\n";
+my $number_mole = "Number of automated descriptions with molecule regulation expression cluster information\: " . $mole_ec_size . "\n";
+my $number_anatomy = "Number of automated descriptions with anatomy expression cluster information\: " . $anatomy_ec_size . "\n";
+
 my $report_output = $total . $number_homology . $number_process . $number_function . $number_component . $number_tissue;
+   $report_output .=  $number_gene . $number_mole . $number_anatomy;
  write_file($report, $report_output); 
 #
 }

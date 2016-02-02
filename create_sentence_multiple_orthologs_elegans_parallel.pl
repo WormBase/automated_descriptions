@@ -30,6 +30,7 @@ my $elegan_gene_list_dir = $home . "release/$PRODUCTION_RELEASE/c_elegans/gene_l
 my $db_gene_list  = $elegan_gene_list_dir . "wb_gene_list.txt";
 
 my $orthology = $home . "release/$PRODUCTION_RELEASE/$species/orthology/";
+my $old_orthology = $home . "release/$RELEASE/$species/orthology/";
 my $elegans_sapiens_orthology = $orthology . "input_files/orthologs.Caenorhabditis_elegans.H_Sapiens.txt";
 my $orthology_elegans = $orthology . "input_files/c_elegans.orthologs.txt";
 my $output_file = $orthology . "output_files/sentences_for_orthology.txt";
@@ -61,7 +62,7 @@ if (-e $output_file){
 my $biomart = $orthology . "input_files/HumanIDs_mart_export.txt";
 my $reading_biomart_file_for_error = read_file($biomart);
 if ($reading_biomart_file_for_error =~ /ERROR/){
-    $biomart =  $orthology . "input_files/HumanIDs_mart_export.org.txt";
+    $biomart =  $old_orthology . "input_files/HumanIDs_mart_export.txt";
 }
 my ($gene_ensg_hash_ref, $gene_hgnc_hash_ref) = get_sapiens_hash($elegans_sapiens_orthology);
 my %gene_ensg_hash= %{$gene_ensg_hash_ref};

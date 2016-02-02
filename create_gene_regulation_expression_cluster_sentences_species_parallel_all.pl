@@ -8,7 +8,6 @@ my @args;
 my $status;
 my $html = ConciseDescriptions::get_html_dir();
 my $home = $html . "concise_descriptions/";
-my $parse_script = "./generate_OA_concise_descriptions_parallel.pl";
 my $parallel_file = "./parallel_path.txt";
 my $parallel_path = read_file($parallel_file);
  chomp($parallel_path);
@@ -19,18 +18,15 @@ my $three_colons = "\:\:\:";
 my $j_flag = "\-j";
 my $percent = "85\%";
 #
+my $script = "./create_sentence_gene_regulation_expression_cluster_species_parallel.pl";
+#
 # $species_file holds a list of species and project numbers studied by Wormbase.
 my $species_file = $home . "species.txt";
 my @lines = read_file($species_file);
 #
-my @species_array = ();
+my $elegans="";
+my @species_array=();
 foreach my $line (@lines){
- chomp($line);
- if ($line){
- 
- $line =~s/^\s+//;
- $line =~s/\s+$//;
-
  my ($species, $project, $name, $prefix) = split(/\t/,$line);
  $species =~s/^\s+//;
  $species =~s/\s+$//;
@@ -38,21 +34,17 @@ foreach my $line (@lines){
  $project =~s/\s+$//;
  $name    =~s/^\s+//;
  $name    =~s/\s+$//;
- $name    =~s/\s/\_/g;
-
- if ($prefix){
-  $prefix  =~s/^\s+//;
-  $prefix  =~s/\s+$//;
- }
- my $term = "";
- if ($prefix){
-  $term = $species . "AND" . $project . "AND" . $name . "AND" . $prefix;
- } else {
-  $term = $species . "AND" . $project . "AND" . $name;
- }
- push(@species_array, $term);
+ $name    =~s/ /\_/g;
+ $prefix  =~s/^\s+//;
+ $prefix  =~s/\s+$//;
+ my $term = $species . "AND" . $project . "AND" .  $name . "AND" . $prefix;
+ if ($species){
+  push(@species_array, $term);
  }
 }
- @args=($parallel_exec, $j_flag, $percent, $parse_script, $three_colons, @species_array);
+
+ @args=($parallel_exec, $j_flag, $percent, $script, $three_colons, @species_array);
  $status=system(@args);
+
+#
 exit 0;
