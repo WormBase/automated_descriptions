@@ -229,8 +229,20 @@ foreach my $file (@sort_unique_list){
      $output = $homology . " " . $go_process  . " " . $go_function . " " . $tissue . " " . $go_component;
     } elsif ($homology) {
      $output = $homology . " " . $gene_ec . " " . $mole_ec . " " . $anatomy_ec;
-    } else {
+    } elsif (($gene_ec) and ($mole_ec) and ($anatomy_ec)) {
      $output = ucfirst($gene_ec) . " " . $mole_ec . " " . $anatomy_ec;
+    } elsif (($mole_ec) and ($anatomy_ec)) {
+     $output = ucfirst($mole_ec) . " " . $anatomy_ec;
+    } elsif (($gene_ec) and ($anatomy_ec)) {
+     $output = ucfirst($gene_ec) . " " . $anatomy_ec;
+    } elsif (($gene_ec) and ($mole_ec)) {
+     $output = ucfirst($gene_ec) . " " . $mole_ec;
+    } elsif ($gene_ec) {
+     $output = ucfirst($gene_ec);
+    } elsif ($mole_ec) {
+     $output = ucfirst($mole_ec);
+    } elsif ($anatomy_ec) {
+     $output = ucfirst($anatomy_ec);
     }
     $output =~ s/  / /g;
     $output =~ s/\n//g;

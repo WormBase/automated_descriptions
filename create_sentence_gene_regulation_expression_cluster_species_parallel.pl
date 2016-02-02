@@ -177,12 +177,14 @@ foreach my $gene_id (@sorted_live_gene_array) {
          }
         }
     } 
-        $experiments =~s/study//gi;
+        $experiments =~s/study//g;
         $experiments =~s/RNA seq/RNA sequencing/g;
         $experiments =~s/RNA\-seq/RNA sequencing/g;
         $experiments = lc $experiments;
         $experiments =~s/ \,/\,/g;
         $experiments =~s/rna sequencing/RNA sequencing/g;
+        $experiments =~s/pcr/PCR/g;
+
     my $regulator = $gene_regulator{$gene_id};
     my $gene = "";
     my @genes = split(/\,/,$regulator);
@@ -203,13 +205,13 @@ foreach my $gene_id (@sorted_live_gene_array) {
     }
     if (@exps > 0) {
      $sentence = "$experiments studies indicate that $name is regulated by $gene"; 
-    }
-    $sentence =~s/bodywall/body wall/gi;
-    $sentence =~s/coelomocyte/coelomocytes/gi;
-    $sentence .="\;\n";
-    $sentence =~s/the all/all/g;
-    $sentence =~s/the certain/certain/g;
-    $sentence =~s/  / /g;
+    
+     $sentence =~s/bodywall/body wall/gi;
+     $sentence =~s/coelomocyte/coelomocytes/gi;
+     $sentence .="\;\n";
+     $sentence =~s/the all/all/g;
+     $sentence =~s/the certain/certain/g;
+     $sentence =~s/  / /g;
 
 #    $sentence = ucfirst($sentence);
 
@@ -221,6 +223,7 @@ foreach my $gene_id (@sorted_live_gene_array) {
      write_file($output_log, {append => 1 }, "\n\n\n");
      write_file($gene_file, $sentence);
     }
+   }
    }
   }
  }

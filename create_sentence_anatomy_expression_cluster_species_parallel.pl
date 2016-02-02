@@ -54,6 +54,7 @@ my $vnc = $tissue_dir . "ventral_cord_neuron.txt";
 my $vnc_neurons_ref=get_neurons($vnc);
 my @vnc_neurons=@{$vnc_neurons_ref};
 foreach my $n (@vnc_neurons){
+ chomp($n);
  $n =~s/^\s+//;
  $n =~s/\s+$//;
  if ($n){
@@ -68,6 +69,7 @@ my @interneurons=@{$interneurons_ref};
 foreach my $n (@interneurons){
  $n =~s/^\s+//;
  $n =~s/\s+$//;
+ chomp($n);
  if ($n){
   push(@neurons, $n);
   $neuron_names{$n} = $n;
@@ -80,6 +82,7 @@ my @sensory_neurons=@{$sensory_neurons_ref};
 foreach my $n (@sensory_neurons){
  $n =~s/^\s+//;
  $n =~s/\s+$//;
+ chomp($n);
  if ($n){
   push(@neurons, $n);
   $neuron_names{$n} = $n;
@@ -92,6 +95,7 @@ my @head_motor_neurons=@{$head_motor_neurons_ref};
 foreach my $n (@head_motor_neurons){
  $n =~s/^\s+//;
  $n =~s/\s+$//;
+ chomp($n);
  if ($n){
   push(@neurons, $n);
   $neuron_names{$n} = $n;
@@ -104,6 +108,7 @@ my @motor_neurons=@{$motor_neurons_ref};
 foreach my $n (@motor_neurons){
  $n =~s/^\s+//;
  $n =~s/\s+$//;
+ chomp($n);
  if ($n){
   push(@neurons, $n);
   $neuron_names{$n} = $n;
@@ -116,6 +121,7 @@ my @mechanosensory_neurons=@{$mechanosensory_neurons_ref};
 foreach my $n (@mechanosensory_neurons){
  $n =~s/^\s+//;
  $n =~s/\s+$//;
+ chomp($n);
  if ($n){
   push(@neurons, $n);
   $neuron_names{$n} = $n;
@@ -128,6 +134,7 @@ my @inner_labial_neurons=@{$inner_labial_neurons_ref};
 foreach my $n (@inner_labial_neurons){
  $n =~s/^\s+//;
  $n =~s/\s+$//;
+ chomp($n);
  if ($n){
    push(@neurons, $n);
    $neuron_names{$n} = $n;
@@ -140,6 +147,7 @@ my @outer_labial_neurons=@{$outer_labial_neurons_ref};
 foreach my $n (@outer_labial_neurons){
  $n =~s/^\s+//;
  $n =~s/\s+$//;
+ chomp($n);
  if ($n){
   push(@neurons, $n);
   $neuron_names{$n} = $n;
@@ -152,6 +160,7 @@ my @pn_neurons=@{$pn_ref};
 foreach my $n (@pn_neurons){
  $n =~s/^\s+//;
  $n =~s/\s+$//;
+ chomp($n);
  if ($n){
    push(@neurons, $n);
    $neuron_names{$n} = $n;
@@ -164,6 +173,7 @@ my @pharyngeal_motor_neurons=@{$pharyngeal_motor_neurons_ref};
 foreach my $n (@pharyngeal_motor_neurons){
  $n =~s/^\s+//;
  $n =~s/\s+$//;
+ chomp($n);
  if ($n){
    push(@neurons, $n);
    $neuron_names{$n} = $n;
@@ -176,6 +186,7 @@ my @amphid_neurons=@{$amphid_neurons_ref};
 foreach my $n (@amphid_neurons){
  $n =~s/^\s+//;
  $n =~s/\s+$//;
+ chomp($n);
  if ($n){
    push(@neurons, $n);
    $neuron_names{$n} = $n;
@@ -188,6 +199,7 @@ my @pharyngeal_interneurons=@{$pharyngeal_interneurons_ref};
 foreach my $n (@pharyngeal_interneurons){
  $n =~s/^\s+//;
  $n =~s/\s+$//;
+ chomp($n);
  if ($n){
    push(@neurons, $n);
    $neuron_names{$n} = $n;
@@ -345,6 +357,7 @@ foreach my $gene_id (@sorted_live_gene_array) {
     $experiments =~s/RNA\-seq/RNA sequencing/g;
     $experiments = lc $experiments;
     $experiments =~s/rna sequencing/RNA sequencing/g;
+    $experiments =~s/pcr/PCR/g;
     $experiments =~s/ \,/\,/g;
 
     my $anatomy = $gene_anatomy{$gene_id};
@@ -554,6 +567,8 @@ my @neuron_list=();
      my $file_line = $_;
      chomp($file_line);
       my ($name, $id) = split(/\t/,$file_line);
+      chomp($name);
+      chomp($id);
       $name=~s/^\s+//; 
       $name=~s/\s+$//;
       $id=~s/^\s+//; 
@@ -563,6 +578,7 @@ my @neuron_list=();
       push(@neuron_list, $name);
     }
 foreach my $n (@neuron_list){
+      chomp($n);
       my $out = "$n\n";
       my $neuron_log = "./neuron.log";
       write_file($neuron_log, {append => 1 }, $out);

@@ -182,6 +182,7 @@ foreach my $gene_id (@sorted_live_gene_array) {
         $experiments = lc $experiments;
         $experiments =~s/rna sequencing/RNA sequencing/g;
         $experiments =~s/ \,/\,/g;
+        $experiments =~s/pcr/PCR/g;
 
     my $regulator = $molecule_regulator{$gene_id};
     my $molecule = "";
