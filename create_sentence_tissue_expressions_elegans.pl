@@ -14,7 +14,9 @@ use Data::Dumper;
 use ConciseDescriptions;
 #
 my $PRODUCTION_RELEASE = ConciseDescriptions::get_production_release();
+#$PRODUCTION_RELEASE = "WS253"; ##liyuling
 my $RELEASE = ConciseDescriptions::get_release();
+#$RELEASE = "WS252"; ##liyuling
 my $html = ConciseDescriptions::get_html_dir();
 my $home_elegans = $html . "concise_descriptions/release/$PRODUCTION_RELEASE/c_elegans/";
 my $tissue_dir = $home_elegans . "tissue_expression/";
@@ -209,7 +211,7 @@ foreach my $gene_id (@sorted_live_gene_array) {
     my $gene_file = $gene_dir . $gene_id;
     my $anatomy = $genes{$gene_id};
     my $name = $gene_name{$gene_id};
-    print "$name\t$anatomy\n";
+   # print "$name\t$anatomy\n";  liyuling
     if (($anatomy) and ($name)){
 
     my @wbbt_elements = split(/\,/,$anatomy);
@@ -521,6 +523,10 @@ while ($pointer <= $#wbbt_elements) {
 #
 #
     my $Anatomy = join("\,", @unique_anatomies);   
+    print "524 $gene_id\n";
+    print "525 $name\n";
+	print "526 $Anatomy\n";
+	print "527 $Anatomy_Instance\n";
     my $summary = "$gene_id\t$name\t$Anatomy\n\t\t\t\t$Anatomy_Instance\n\n\n";
     my $gene_output = "$gene_id\n";
 
@@ -598,6 +604,9 @@ while ($pointer <= $#wbbt_elements) {
     $sentence =~s/including the hermaphrodite\;/including in the hermaphrodite\;/g;
 
     my @sentence_terms = split(/\,/, $sentence);
+	print $summary;
+        print $sentence;
+        print $gene_output; 
 
      write_file($output_test, {append => 1 }, $summary);
      write_file($output_test_genes, {append => 1 }, $gene_output);
@@ -682,7 +691,9 @@ sub get_gene_wbbt_hash{
    next if ($line =~/Life\_stage/);
    next if ($line =~/WB\_REF\:WBPaper00040986/);
    next if ($line !~/taxon\:6239/);
-   next if ($line !~/IEP/);
+   next if ($line !~/IDA/);
+   next if ($line =~ /Enriched/); ##liyuling 20160418	
+   #next if ($line !~/IEP/);  #liyuling
    chomp($line);
 #   print "line is $line\n";
    my @fields = split(/\t/, $line);
